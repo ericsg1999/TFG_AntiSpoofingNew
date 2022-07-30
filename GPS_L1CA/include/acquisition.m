@@ -1,4 +1,4 @@
-function acqResults = acquisition(longSignal, settings)
+function acqResults = acquisition(longSignal, settings, acqType,SatellitePresentList)
 %Function performs cold start acquisition on the collected "data". It
 %searches for GPS signals of all satellites, which are listed in field
 %"acqSatelliteList" in the settings structure. Function saves code phase
@@ -125,6 +125,24 @@ numberOfFreqBins = round(settings.acqSearchBand * 2 / settings.acqSearchStep) + 
 % Carrier frequency bins to be searched
 coarseFreqBin = zeros(1, numberOfFreqBins);
 
+% %--- Initialize acqResults ------------------------------------------------
+% switch acqType
+%     case 'Normal'
+%         % Carrier frequencies of detected signals
+%         acqResults.carrFreq     = zeros(1, 32);
+%         % C/A code phases of detected signals
+%         acqResults.codePhase    = zeros(1, 32);
+%         % Correlation peak ratios of the detected signals
+%         acqResults.peakMetric   = zeros(1, 32); 
+%         
+%     case 'APT'
+%         % Carrier frequencies of detected signals
+%         acqResults.carrFreq     = zeros(settings.AptNumberChannelsPerSat, 32);
+%         % C/A code phases of detected signals
+%         acqResults.codePhase    = zeros(settings.AptNumberChannelsPerSat, 32);
+%         % Correlation peak ratios of the detected signals
+%         acqResults.peakMetric   = zeros(settings.AptNumberChannelsPerSat, 32);        
+% end
 %--- Initialize acqResults ------------------------------------------------
 % Carrier frequencies of detected signals
 acqResults.carrFreq     = zeros(1, 32);
@@ -132,7 +150,7 @@ acqResults.carrFreq     = zeros(1, 32);
 acqResults.codePhase    = zeros(1, 32);
 % Correlation peak ratios of the detected signals
 acqResults.peakMetric   = zeros(1, 32);
-
+acqResults.SatellitePresentList= [];
 %--- Varaibles for fine acquisition ---------------------------------------
 % Carrier frequency search step for fine acquisition
 fineSearchStep = 25;
@@ -150,9 +168,19 @@ finePhasePoints = (0 : (40*samplesPerCode-1)) * 2 * pi * ts;
 %--- Input signal power for GLRT statistic calculation --------------------
 sigPower = sqrt(var(longSignal(1:samplesPerCode)) * samplesPerCode);
 
+list_sat_to_acquire=zeros(1,32);
+switch acqType
+    case 'Normal'
+        list_sat_to_acquire=settings.acqSatelliteList;
+    case 'APT'
+        list_sat_to_acquire=SatellitePresentList;
+    otherwise 
+        fprintf('ERROR: Incorrect Acquisition type (acqType) input parameter of the function acquisition.m');
+end
+
 % Perform search for all listed PRN numbers ...
 fprintf('(');
-for PRN = settings.acqSatelliteList
+for PRN = list_sat_to_acquire
     %% Coarse acquisition ===========================================
     % Generate C/A codes and sample them according to the sampling freq.
     caCodesTable = makeCaTable(PRN,settings);
@@ -191,19 +219,126 @@ for PRN = settings.acqSatelliteList
         end % nonCohIndex = 1: settings.acqNonCohTime
     end % frqBinIndex = 1:numberOfFreqBins
     
-    %% Look for correlation peaks for coarse acquisition ============
-    % Find the correlation peak and the carrier frequency
-    [~, acqCoarseBin] = max(max(results, [], 2));
-    % Find code phase of the same correlation peak
-    [peakSize, codePhase] = max(max(results));
-    % Store GLRT statistic
-    acqResults.peakMetric(PRN) = peakSize/sigPower/settings.acqNonCohTime;
+     %% plot the grid of the acquired acquisition search grids
+ 
+    if settings.acqInitialPlots==1 && (strcmp(acqType,'Normal')==1)
+        Td=0:1:(samplesPerCode-1);
+        figure;
+        mesh(Td,frqBins,results);
+        title(['PCPS ' acqType ' Acquisition grid for SV ID ', num2str(PRN)]);
+        xlabel('Code delay [samples]');
+        ylabel('Doppler freq [Hz]');
+        
+    elseif settings.AptPlots==1 && (strcmp(acqType,'APT')==1)
+        Td=0:1:(samplesPerCode-1);
+        
+        if settings.AptShowPlots==0
+            f=figure;
+            set(gcf, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1]);
+            
+%             f=figure
+%             frame_h = get(handle(gcf),'JavaFrame');
+%             set(frame_h,'Maximized',1);
+            set(f, 'visible', 'off');
+            
+        else
+            f=figure
+        end
+        
+        mesh(Td,frqBins,results);
+        titol=['PCPS ' acqType ' Acquisition grid for SV ID ', num2str(PRN) ' (', datestr(datetime('now')) ')'];
+%         data_string=strsplit(datestr(datetime('now')))
+%         titol_=['PCPS_' acqType '_PRN_', num2str(PRN) '_(', cell2mat(split(datestr(datetime('now')),' ',2)) ')'];
+        titol_=['PCPS_' acqType '_PRN_', num2str(PRN) '_(', strrep(strrep(datestr(now), ':', '-'),' ','-'), ')'];
+        title(titol);
+        xlabel('Code delay [samples]');
+        ylabel('Doppler freq [Hz]');
+        
+        if settings.AptSavePlots==1
+            %set(f,'WindowState','fullscreen');
+            saveas(f,['D:\Images\' titol_ '.fig']); %gcf stands for the actual figure
+        end
+        
+    end
+
+%     %% Look for correlation peaks for coarse acquisition ============
+%     % Find the correlation peak and the carrier frequency
+%     [~, acqCoarseBin] = max(max(results, [], 2));
+%     % Find code phase of the same correlation peak
+%     [peakSize, codePhase] = max(max(results));
+%     % Store GLRT statistic
+%     acqResults.peakMetric(PRN) = peakSize/sigPower/settings.acqNonCohTime;
+
+    %% Look for correlation peaks in the coarse acquisition results ==============================
+    % Find the highest peak and compare it to the second highest peak
+    % The second peak is chosen not closer than 1 chip to the highest peak
     
-    % If the result is above threshold, then there is a signal ...
-    %% Fine carrier frequency search ================================
+    %--------------- FIRST PEAK -------------------------------------------
+    %--- Find the correlation peak and the carrier frequency --------------
+    %M = max(A,[],dim) returns the maximum element along dimension dim. For example, if A is a matrix, then max(A,[],2) is a column vector containing the maximum value of each row.
+    [primaryPeakSize frequencyBinIndex] = max(max(results, [], 2));
+
+    %--- Find code phase of the same correlation peak ---------------------
+    [primaryPeakSize primaryCodePhase] = max(max(results));
     
+    
+    %--------------- SECOND PEAK ------------------------------------------
+    %--- Find 1 chip wide C/A code phase exclude range around the peak ----
+    samplesPerCodeChip   = round(settings.samplingFreq / settings.codeFreqBasis);
+    excludeRangeIndex1 = primaryCodePhase - samplesPerCodeChip;
+    excludeRangeIndex2 = primaryCodePhase + samplesPerCodeChip;
+
+    %--- Correct C/A code phase exclude range if the range includes array
+    %boundaries
+    if excludeRangeIndex1 < 2
+        codePhaseRange = excludeRangeIndex2 : ...
+                         (samplesPerCode + excludeRangeIndex1-1);
+                         
+    elseif excludeRangeIndex2 >= samplesPerCode
+        codePhaseRange = (excludeRangeIndex2 - samplesPerCode) : ...
+                         excludeRangeIndex1;
+    else
+        codePhaseRange = [1:excludeRangeIndex1, ...
+                          excludeRangeIndex2 : samplesPerCode];
+    end
+
+    %--- Find the second highest correlation peak in the same freq. bin ---
+    [secondaryPeakSize secondaryPeakCodePhase] = max(results(frequencyBinIndex, codePhaseRange));
+    
+    
+    %--------------- THIRD PEAK -------------------------------------------
+    %--- Find 1 chip wide C/A code phase exclude range around the peak ----
+    excludeRangeIndex11 = secondaryPeakCodePhase - samplesPerCodeChip;
+    excludeRangeIndex22 = secondaryPeakCodePhase + samplesPerCodeChip;
+
+    %--- Correct C/A code phase exclude range if the range includes array
+    %boundaries
+    if excludeRangeIndex1 < 2
+        codePhaseRange2 = [excludeRangeIndex2 : excludeRangeIndex11...
+                          excludeRangeIndex22:(samplesPerCode + excludeRangeIndex1-1)];
+
+    elseif excludeRangeIndex2 >= samplesPerCode
+        codePhaseRange2 = [(excludeRangeIndex2 - samplesPerCode):excludeRangeIndex11 ...
+                         excludeRangeIndex22:excludeRangeIndex1] ;
+    else
+        if excludeRangeIndex1<excludeRangeIndex11
+            codePhaseRange2 = [1:excludeRangeIndex1  excludeRangeIndex2:excludeRangeIndex11 excludeRangeIndex22:samplesPerCode];
+        else
+            codePhaseRange2 = [1:excludeRangeIndex11  excludeRangeIndex22:excludeRangeIndex1 excludeRangeIndex2:samplesPerCode];
+        end
+    end
+
+    %--- Find the third highest correlation peak in the same freq. bin ---
+    [thirdPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange2));
+    
+    %--- Store result -----------------------------------------------------
+    acqResults.peakMetric(1,PRN) = primaryPeakSize/thirdPeakSize;            
+    % If the result is above threshold, then there is a signal ...    
+
+    
+    %% Fine carrier frequency search =================================================
     %--- Do fine acquisition -----------------------------------
-    if acqResults.peakMetric(PRN) > settings.acqThreshold
+    if acqResults.peakMetric(1,PRN) > settings.acqThreshold
         
         % Indicate PRN number of the detected signal
         fprintf('%02d ', PRN);
@@ -218,13 +353,13 @@ for PRN = settings.acqSatelliteList
         caCode40ms = caCode(rem(codeValueIndex, settings.codeLength) + 1);
         
         % Take 40cm incoming signal for fine acquisition
-        sig40cm = longSignal(codePhase:codePhase + 40*samplesPerCode -1);
+        sig40cm = longSignal(primaryCodePhase:primaryCodePhase + 40*samplesPerCode -1);
         
         %--- Search different fine freq bins ------------------------------
         for fineBinIndex = 1 : numOfFineBins
             %--- Correlation for each code --------------------------------
             % Carrier frequencies of the frequency bins
-            fineFreqBins(fineBinIndex) = coarseFreqBin(acqCoarseBin) + ...
+            fineFreqBins(fineBinIndex) = coarseFreqBin(frequencyBinIndex) + ...
                 settings.acqSearchStep/2 - fineSearchStep * (fineBinIndex - 1);
             % Local carrier signal
             sigCarr40cm = exp(-1i * fineFreqBins(fineBinIndex) * finePhasePoints);
@@ -251,19 +386,19 @@ for PRN = settings.acqSatelliteList
         
         %--- Find the fine carrier freq. ----------------------------------
         [~, maxFinBin] = max(fineResult);
-        acqResults.carrFreq(PRN) = fineFreqBins(maxFinBin);
+        acqResults.carrFreq(1,PRN) = fineFreqBins(maxFinBin);
         % Save code phase acquisition result
-        acqResults.codePhase(PRN) = codePhase;
+        acqResults.codePhase(1,PRN) = primaryCodePhase;
         %signal found, if IF =0 just change to 1 Hz to allow processing
-        if(acqResults.carrFreq(PRN) == 0)
-            acqResults.carrFreq(PRN) = 1;
+        if(acqResults.carrFreq(1,PRN) == 0)
+            acqResults.carrFreq(1,PRN) = 1;
         end
         
         %% Downsampling recovery ====================================
         % Find acquisition results corresponding to orignal sampling freq
         if (exist('oldFreq', 'var') && settings.resamplingflag == 1)
             % Find code phase
-            acqResults.codePhase(PRN) = floor((codePhase - 1)/ ...
+            acqResults.codePhase(1,PRN) = floor((primaryCodePhase - 1)/ ...
                 settings.samplingFreq * oldFreq)+1;
             
             % Doppler frequency
@@ -272,15 +407,22 @@ for PRN = settings.acqSatelliteList
                 % with the true frequemcy about half of the sampling
                 % frequency, so we have the following:
                 IF_temp = settings.samplingFreq - settings.IF;
-                doppler = IF_temp - acqResults.carrFreq(PRN);
+                doppler = IF_temp - acqResults.carrFreq(1,PRN);
             else
-                doppler = acqResults.carrFreq(PRN) - settings.IF;
+                doppler = acqResults.carrFreq(1,PRN) - settings.IF;
             end
             
             % Carrier freq. corresponding to orignal sampling freq
-            acqResults.carrFreq(PRN) = doppler + oldIF;
+            acqResults.carrFreq(1,PRN) = doppler + oldIF;
         end
-        
+        %% In case of APT active, store the values of the second peak in the acquisition results
+        if settings.AptActive==1  
+            %--- Store result secondary peak in case it overcomes the APT threshold-----------------------------------------------------
+            acqResults.peakMetric(2,PRN) = secondaryPeakSize/thirdPeakSize;
+            acqResults.carrFreq(2,PRN) = fineFreqBins(maxFinBin);
+            acqResults.codePhase(2,PRN) =secondaryPeakCodePhase; 
+
+        end
     else
         %--- No signal with this PRN --------------------------------------
         fprintf('. ');

@@ -38,7 +38,7 @@ figure(101);
 
 hAxes = newplot();
 
-bar(hAxes, acqResults.peakMetric);
+bar(hAxes, acqResults.peakMetric(1,:));
 
 title (hAxes, 'Acquisition results');
 xlabel(hAxes, 'PRN number (no bar - SV is not in the acquisition list)');
@@ -51,7 +51,7 @@ set   (hAxes, 'YGrid', 'on');
 
 %% Mark acquired signals ==================================================
 
-acquiredSignals = acqResults.peakMetric .* (acqResults.carrFreq ~= 0);
+acquiredSignals = acqResults.peakMetric(1,:) .* (acqResults.carrFreq(1,:) ~= 0);
 
 hold(hAxes, 'on');
 bar (hAxes, acquiredSignals, 'FaceColor', [0 0.8 0]);

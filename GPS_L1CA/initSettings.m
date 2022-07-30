@@ -57,8 +57,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -106,6 +108,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;                                                          
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -175,8 +179,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -224,6 +230,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -292,8 +300,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -341,6 +351,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;                                                          
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -409,8 +421,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -458,6 +472,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -525,8 +541,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -574,6 +592,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;                                                          
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -641,8 +661,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -690,6 +712,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;                                                          
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -757,8 +781,10 @@ switch signal_file
         % below - in Nav parameters) to ensure nav subframes are provided
         settings.msToProcess        = 37000;        %[ms]
 
-        % Number of channels to be used for signal processing
-        settings.numberOfChannels   = 8;
+        % Maximum number of satellites to process. For each satellite, it
+        % will be assigned settings.AptNumberChannelsPerSat number of
+        % channels for each satellite to process
+        settings.maxNumSatToProcess   = 8; %anteriorment es deia numberOfChannels
 
         % Move the starting point of processing. Can be used to start the signal
         % processing at any point in the data record (e.g. for long records). fseek
@@ -806,6 +832,8 @@ switch signal_file
         % Enable/dissable use of downsampling for acquisition
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
+        % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
+        settings.acqInitialPlots=0;                                                          
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;

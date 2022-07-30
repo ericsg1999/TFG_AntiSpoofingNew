@@ -73,7 +73,7 @@ if (fid > 0)
 % records or for signal processing in blocks).
 fseek(fid, dataAdaptCoeff*settings.skipNumberOfBytes, 'bof'); 
 
-%% Acquisition ============================================================
+%% (Normal) Acquisition ============================================================
 
 % Do acquisition if it is not disabled in settings or if the variable
 % acqResults does not exist.
@@ -97,7 +97,10 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
 
     %--- Do the acquisition -------------------------------------------
     disp ('   Acquiring satellites...');
-    acqResults = acquisition(data, settings);
+    %acqResults = acquisition(data, settings);
+    acqType='Normal';
+    SatellitePresentList=[];
+    acqResults = acquisition(data, settings, acqType,SatellitePresentList);
     
     if settings.plotAcquisition
         plotAcquisition(acqResults);
@@ -108,7 +111,7 @@ end
 
 % Start further processing only if a GNSS signal was acquired (the
 % field FREQUENCY will be set to 0 for all not acquired signals)
-if (any(acqResults.carrFreq))
+if (any(acqResults.carrFreq(1,:)))
     channel = preRun(acqResults, settings);
     showChannelStatus(channel, settings);
 else

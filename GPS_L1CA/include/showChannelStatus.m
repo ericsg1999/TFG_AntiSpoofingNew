@@ -33,12 +33,13 @@ function showChannelStatus(channel, settings)
 
 %CVS record:
 %$Id: showChannelStatus.m,v 1.4.2.8 2006/08/14 11:38:22 dpl Exp $
+numberChannels=sum(size(channel.PRN,1));
 
 fprintf('\n*=========*=====*===============*===========*=============*========*\n');
 fprintf(  '| Channel | PRN |   Frequency   |  Doppler  | Code Offset | Status |\n');
 fprintf(  '*=========*=====*===============*===========*=============*========*\n');
 
-for channelNr = 1 : settings.numberOfChannels
+for channelNr = 1 : numberChannels
     if (channel(channelNr).status ~= '-')
         fprintf('|      %2d | %3d |  %2.5e |   %5.0f   |    %6d   |     %1s  |\n', ...
                 channelNr, ...
