@@ -71,7 +71,18 @@ if (fid > 0)
 % Move the starting point of processing. Can be used to start the
 % signal processing at any point in the data record (e.g. good for long
 % records or for signal processing in blocks).
-fseek(fid, dataAdaptCoeff*settings.skipNumberOfBytes, 'bof'); 
+
+% skipNumberOfBytes=settings.samplingFreq*(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond);
+% fseek(fid, dataAdaptCoeff*skipNumberOfBytes, 'bof'); 
+
+% skipNumberOfSamples=ceil(settings.samplingFreq*(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond));
+% switch settings.fileType
+%     case 1
+%         skipNumberOfBytes=skipNumberOfSamples;
+%     case 2
+%         skipNumberOfBytes=skipNumberOfSamples*4;
+% end
+% fseek(fid, skipNumberOfBytes, 'bof'); 
 
 %% (Normal) Acquisition ============================================================
 
@@ -81,27 +92,43 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
     
     % Find number of samples per spreading code
     samplesPerCode = round(settings.samplingFreq / ...
-                       (settings.codeFreqBasis / settings.codeLength));
-    
-    
-    % At least 42ms of signal are needed for fine frequency estimation
-    codeLen = max(42,settings.acqNonCohTime+2);
-    % Read data for acquisition.
-    data  = fread(fid, dataAdaptCoeff*codeLen*samplesPerCode, settings.dataType)';
-
-    if (dataAdaptCoeff==2)    
-        data1=data(1:2:end);    
-        data2=data(2:2:end);    
-        data=data1 + 1i .* data2;    
+                        (settings.codeFreqBasis / settings.codeLength));
+     
+%     
+% %     % At least 42ms of signal are needed for fine frequency estimation
+%     codeLen = max(42,settings.acqNonCohTime+2);
+%     
+     codeLen=1000;
+% %     %Read data for acquisition.
+%     data  = fread(fid, dataAdaptCoeff*codeLen*samplesPerCode, settings.dataType)';
+%     ftell(fid)
+%     if (dataAdaptCoeff==2)    
+%         data1=data(1:2:end);    
+%         data2=data(2:2:end);    
+%         data=data1 + 1i .* data2;    
+%     end
+    openFile=0;
+    fileID=fid;
+    numSamples=codeLen*samplesPerCode;
+    switch settings.fileType
+        case 1
+            startingByteToRead=(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond)*settings.samplingFreq;%Bytes
+        case 2
+            startingByteToRead=(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond)*settings.samplingFreq*4;%Bytes
+            
     end
-
+    
+    [data fileID]=readSignalFile(fileID,startingByteToRead,settings,numSamples,openFile);
+    ftell(fileID)
+    
+    data=data*settings.powerCorrectionFactor;
     %--- Do the acquisition -------------------------------------------
     disp ('   Acquiring satellites...');
     %acqResults = acquisition(data, settings);
     acqType='Normal';
     SatellitePresentList=[];
-    acqResults = acquisition(data, settings, acqType,SatellitePresentList);
-    
+    %acqResults = acquisition(data, settings, acqType,SatellitePresentList);
+    acqResults = acquisition_old(data, settings, acqType,SatellitePresentList);
     if settings.plotAcquisition
         plotAcquisition(acqResults);
     end
@@ -141,8 +168,9 @@ disp('   Processing is complete for this data block');
 disp('Post processing of the signal is over.');
 %% Plot all results ===================================================
 disp ('   Ploting results...');
+numberChannels=sum(size(channel.PRN,1));
 if settings.plotTracking
-    plotTracking(1:settings.numberOfChannels, trkResults, settings);
+    plotTracking(1:numberChannels, trkResults, settings);
 end
 
 if settings.plotNavigation

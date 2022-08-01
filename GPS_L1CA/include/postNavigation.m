@@ -64,11 +64,11 @@ end
 % trackResults.I_P in each channel. The position is PRN code count
 % since start of tracking. Corresponding value will be set to inf 
 % if no valid preambles were detected in the channel.
-subFrameStart  = inf(1, settings.numberOfChannels);
+subFrameStart  = inf(1, settings.maxNumSatToProcess);
 
 % Time Of Week (TOW) of the first message(in seconds). Corresponding value
 % will be set to inf if no valid preambles were detected in the channel.
-TOW  = inf(1, settings.numberOfChannels);
+TOW  = inf(1, settings.maxNumSatToProcess);
 
 %--- Make a list of channels excluding not tracking channels ---------------
 activeChnList = find([trackResults.status] ~= '-');
@@ -109,8 +109,8 @@ end
 %% Set measurement-time point and step  =====================================
 % Find start and end of measurement point locations in IF signal stream with available
 % measurements
-sampleStart = zeros(1, settings.numberOfChannels);
-sampleEnd = inf(1, settings.numberOfChannels);
+sampleStart = zeros(1, settings.maxNumSatToProcess);
+sampleEnd = inf(1, settings.maxNumSatToProcess);
 
 for channelNr = activeChnList
     sampleStart(channelNr) = ...
@@ -135,7 +135,7 @@ measNrSum = fix((sampleEnd-sampleStart)/measSampleStep);
 % the first calculation of receiver position. There is no reference point
 % to find the elevation angle as there is no receiver position estimate at
 % this point.
-satElev  = inf(1, settings.numberOfChannels);
+satElev  = inf(1, settings.maxNumSatToProcess);
 
 % Save the active channel list. The list contains satellites that are
 % tracked and have the required ephemeris data. In the next step the list
@@ -167,14 +167,14 @@ for currMeasNr = 1:measNrSum
     % These two lines help the skyPlot function. The satellites excluded
     % do to elevation mask will not "jump" to possition (0,0) in the sky
     % plot.
-    navSolutions.el(:, currMeasNr) = NaN(settings.numberOfChannels, 1);
-    navSolutions.az(:, currMeasNr) = NaN(settings.numberOfChannels, 1);
+    navSolutions.el(:, currMeasNr) = NaN(settings.maxNumSatToProcess, 1);
+    navSolutions.az(:, currMeasNr) = NaN(settings.maxNumSatToProcess, 1);
                                      
     % Signal transmitting time of each channel at measurement sample location
     navSolutions.transmitTime(:, currMeasNr) = ...
-                                         NaN(settings.numberOfChannels, 1);
+                                         NaN(settings.maxNumSatToProcess, 1);
     navSolutions.satClkCorr(:, currMeasNr) = ...
-                                         NaN(settings.numberOfChannels, 1);                                                                  
+                                         NaN(settings.maxNumSatToProcess, 1);                                                                  
        
     % Position index of current measurement time in IF signal stream
     % (in unit IF signal sample point)

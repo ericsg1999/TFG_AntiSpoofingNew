@@ -96,7 +96,7 @@ switch signal_file
         settings.acqSatelliteList   = 1:32;         %[PRN numbers]
         % Band around IF to search for satellite signal. Depends on max Doppler.
         % It is single sideband, so the whole search band is tiwce of it.
-        settings.acqSearchBand      = 7000;           %[Hz]
+        settings.acqSearchBand      = 14;           %[KHz]
         % Non-coherent integration times after 1ms coherent integration
         settings.acqNonCohTime      = 20;                %[ms]
         % Threshold for the signal presence decision rule
@@ -109,7 +109,7 @@ switch signal_file
         settings.resamplingflag         = 0;              % 0 - Off
                                                           % 1 - On
         % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
-        settings.acqInitialPlots=0;                                                          
+        settings.acqInitialPlots=0;
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -177,7 +177,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 37000;        %[ms]
+        settings.msToProcess        = 220000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -189,7 +189,14 @@ switch signal_file
         % function is used to move the file read point, therefore advance is byte
         % based only. 
         settings.skipNumberOfBytes     = 0;
-
+        settings.fileStartingReadingSecond=50;
+        % Texbat spoofing scenarios may not be perfectly aligned with the
+        % cleanStatic signal. In paper "Detailed Analysis of the TEXBAT
+        % Datasets Using a High Fidelity Software GPS Receiver" it is
+        % detailed these offsets.
+        settings.fileStartingOffsetSecond=0; 
+        
+        settings.powerCorrectionFactor=1;%0.373;
         %% Raw signal file name and other parameter ===============================
         % This is a "default" name of the data file (signal record) to be used in
         % the post-processing mode
@@ -218,13 +225,13 @@ switch signal_file
         settings.acqSatelliteList   = 1:32;         %[PRN numbers]
         % Band around IF to search for satellite signal. Depends on max Doppler.
         % It is single sideband, so the whole search band is tiwce of it.
-        settings.acqSearchBand      = 7000;           %[Hz]
+        settings.acqSearchBand      = 14;           %[KHz]
         % Non-coherent integration times after 1ms coherent integration
         settings.acqNonCohTime      = 20;                %[ms]
         % Threshold for the signal presence decision rule
         settings.acqThreshold       = 3.5;
         % Frequency search step for coarse acquisition
-        settings.acqSearchStep      = 500;               % [Hz]
+        settings.acqSearchStep      = 250;               % [Hz]
         % Sampling rate threshold for downsampling 
         settings.resamplingThreshold    = 8e6;            % [Hz]
         % Enable/dissable use of downsampling for acquisition
@@ -232,6 +239,7 @@ switch signal_file
                                                           % 1 - On
         % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
         settings.acqInitialPlots=0;
+        settings.acqFineFreqSearch=1;
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;
@@ -419,7 +427,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 37000;        %[ms]
+        settings.msToProcess        = 220000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -431,7 +439,13 @@ switch signal_file
         % function is used to move the file read point, therefore advance is byte
         % based only. 
         settings.skipNumberOfBytes     = 0;
-
+        settings.fileStartingReadingSecond=50;
+        % Texbat spoofing scenarios may not be perfectly aligned with the
+        % cleanStatic signal. In paper "Detailed Analysis of the TEXBAT
+        % Datasets Using a High Fidelity Software GPS Receiver" it is
+        % detailed these offsets.
+        settings.fileStartingOffsetSecond=2.20332084;%;
+        settings.powerCorrectionFactor=1;
         %% Raw signal file name and other parameter ===============================
         % This is a "default" name of the data file (signal record) to be used in
         % the post-processing mode
@@ -460,13 +474,13 @@ switch signal_file
         settings.acqSatelliteList   = 1:32;         %[PRN numbers]
         % Band around IF to search for satellite signal. Depends on max Doppler.
         % It is single sideband, so the whole search band is tiwce of it.
-        settings.acqSearchBand      = 7000;           %[Hz]
+        settings.acqSearchBand      = 14;           %[KHz]
         % Non-coherent integration times after 1ms coherent integration
         settings.acqNonCohTime      = 20;                %[ms]
         % Threshold for the signal presence decision rule
         settings.acqThreshold       = 3.5;
         % Frequency search step for coarse acquisition
-        settings.acqSearchStep      = 500;               % [Hz]
+        settings.acqSearchStep      = 250;               % [Hz]
         % Sampling rate threshold for downsampling 
         settings.resamplingThreshold    = 8e6;            % [Hz]
         % Enable/dissable use of downsampling for acquisition
@@ -474,6 +488,7 @@ switch signal_file
                                                           % 1 - On
         % Activates acqusition search grid plots or not. 1 (active), 0 (not active)
         settings.acqInitialPlots=0;
+        settings.acqFineFreqSearch=1;
         %% Tracking loops settings ================================================
         % Code tracking loop parameters
         settings.dllDampingRatio         = 0.7;

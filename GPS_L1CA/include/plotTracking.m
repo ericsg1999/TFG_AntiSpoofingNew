@@ -34,7 +34,7 @@ function plotTracking(channelList, trackResults, settings)
 %$Id: plotTracking.m,v 1.5.2.23 2006/08/14 14:45:14 dpl Exp $
 
 % Protection - if the list contains incorrect channel numbers
-channelList = intersect(channelList, 1:settings.numberOfChannels);
+channelList = intersect(channelList, 1:settings.maxNumSatToProcess);
 
 %=== For all listed channels ==============================================
 for channelNr = channelList

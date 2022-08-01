@@ -61,7 +61,7 @@ function [pseudoranges,transmitTime,localTime] = ...
 % $Id: calculatePseudoranges.m,v 1.1.2.18 2006/08/09 17:20:11 dpl Exp $
     
 % Transmitting Time of all channels at current measurement sample location
-transmitTime = inf(1, settings.numberOfChannels);
+transmitTime = inf(1, settings.maxNumSatToProcess);
 
 %--- For all channels in the list ... 
 for channelNr = channelList
