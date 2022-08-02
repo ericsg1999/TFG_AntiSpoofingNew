@@ -81,6 +81,8 @@ numberOfFrqBins = round((settings.acqSearchBand)*1000/settings.acqSearchStep) + 
 % Generate all C/A codes and sample them according to the sampling freq.
 caCodesTable = makeCaTable_old(settings);
 
+%--- Input signal power for GLRT statistic calculation --------------------
+sigPower = sqrt(var(longSignal(1:samplesPerCode)) * samplesPerCode);
 
 %--- Initialize arrays to speed up the code -------------------------------
 % Search results of all frequency bins and code shifts (for one satellite)
@@ -161,26 +163,46 @@ for PRN = list_sat_to_acquire
             case 2
                 %--- Generate local exponential -------------------------------
                 expCarr=exp(-1j*frqBins(frqBinIndex) * phasePoints); %e^(-j*2pi*fd_estimation*t)
-
-                %--- "Remove carrier" from the signal -----------------------------
-                baseband_samples_complex1=signal1.*expCarr;
-                baseband_samples_complex2=signal2.*expCarr;
-
-                %--- Convert the baseband signal to frequency domain --------------
-                IQfreqDom1 = fft(baseband_samples_complex1);
-                IQfreqDom2 = fft(baseband_samples_complex2); 
+                %% INTEGRATION
+                        %--- Do correlation -----------------------------------------------
+                for nonCohIndex = 1: settings.acqNonCohTime
+                    % Take 2ms vectors of input data to do correlation
+                    signal = longSignal((nonCohIndex - 1) * samplesPerCode + ...
+                        1 : (nonCohIndex) * samplesPerCode);
+                    % "Remove carrier" from the signal
+                    I      = real(expCarr .* signal);
+                    Q      = imag(expCarr .* signal);
+                    % Convert the baseband signal to frequency domain
+                    IQfreqDom = fft(I + 1i*Q);
+                    % Multiplication in the frequency domain (correlation in
+                    % time domain)
+                    convCodeIQ = IQfreqDom .* caCodeFreqDom;
+                    % Perform inverse DFT and store correlation results
+                    cohRresult = abs(ifft(convCodeIQ));
+                    % Non-coherent integration
+                    results(frqBinIndex, :) = results(frqBinIndex, :) + cohRresult;
+                end % nonCohIndex = 1: settings.acqNonCohTime
+                
+%                 %% NO INTEGRATION
+% %                 %--- "Remove carrier" from the signal -----------------------------
+%                 baseband_samples_complex1=signal1.*expCarr;
+%                 baseband_samples_complex2=signal2.*expCarr;
+% %                 %--- Convert the baseband signal to frequency domain --------------
+%                 IQfreqDom1 = fft(baseband_samples_complex1);
+%                 IQfreqDom2 = fft(baseband_samples_complex2);
+                
         end
         
 
         %--- Multiplication in the frequency domain (correlation in time
         %domain)
-        convCodeIQ1 = IQfreqDom1 .* caCodeFreqDom;
-        convCodeIQ2 = IQfreqDom2 .* caCodeFreqDom;
+        convCodeIQ = IQfreqDom .* caCodeFreqDom;
+        %convCodeIQ2 = IQfreqDom2 .* caCodeFreqDom;
 
         %--- Perform inverse DFT and store correlation results ------------
-        acqRes1 = abs(ifft(convCodeIQ1)) .^ 2;
-        acqRes2 = abs(ifft(convCodeIQ2)) .^ 2;
-        
+        acqRes1 = abs(ifft(convCodeIQ)) .^ 2;
+        %acqRes2 = abs(ifft(convCodeIQ2)) .^ 2;
+        acqRes2=0;
         %--- Check which msec had the greater power and save that, will
         %"blend" 1st and 2nd msec but will correct data bit issues
         if (max(acqRes1) > max(acqRes2))

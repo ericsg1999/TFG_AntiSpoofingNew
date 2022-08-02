@@ -96,9 +96,8 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
      
 %     
 % %     % At least 42ms of signal are needed for fine frequency estimation
-%     codeLen = max(42,settings.acqNonCohTime+2);
-%     
-     codeLen=1000;
+    codeLen = max(42,settings.acqNonCohTime+2);   
+     codeLen=42;
 % %     %Read data for acquisition.
 %     data  = fread(fid, dataAdaptCoeff*codeLen*samplesPerCode, settings.dataType)';
 %     ftell(fid)
@@ -128,7 +127,8 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
     acqType='Normal';
     SatellitePresentList=[];
     %acqResults = acquisition(data, settings, acqType,SatellitePresentList);
-    acqResults = acquisition_old(data, settings, acqType,SatellitePresentList);
+    %acqResults = acquisition_old(data, settings, acqType,SatellitePresentList);
+    acqResults = acquisition_new_w_APT(data, settings, acqType,SatellitePresentList)
     if settings.plotAcquisition
         plotAcquisition(acqResults);
     end

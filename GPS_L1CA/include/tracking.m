@@ -142,24 +142,24 @@ for channelNr = 1:numberChannels
                 % The GUI is updated every 50ms. This way Matlab GUI is still
                 % responsive enough. At the same time Matlab is not occupied
                 % all the time with GUI task.
-                if (rem(loopCnt, 50) == 0)
+                
 
-                    Ln = newline;
-                    trackingStatus=['APT: Ch ', int2str(channelNr), ...
-                        ' of ', int2str(numberChannels),Ln ...
-                        'PRN: ', int2str(channel(channelNr).PRN),Ln ...
-                        'Completed ',int2str(it), ...
-                        ' of ', int2str(codePeriods/(settings.AptPeriod)+1), ' APT checks'];
+                Ln = newline;
+                trackingStatus=['APT: Ch ', int2str(channelNr), ...
+                    ' of ', int2str(numberChannels),Ln ...
+                    'PRN: ', int2str(channel(channelNr).PRN),Ln ...
+                    'Completed ',int2str(it), ...
+                    ' of ', int2str(codePeriods/(settings.AptPeriod)+1), ' APT checks'];
 
-                    try
-                        waitbar(loopCnt/(codePeriods+settings.AptPeriod),hwb,trackingStatus);
-                    catch
-                        % The progress bar was closed. It is used as a signal
-                        % to stop, "cancel" processing. Exit.
-                        disp('Progress bar closed, exiting...');
-                        return
-                    end
+                try
+                    waitbar(loopCnt/(codePeriods+settings.AptPeriod),hwb,trackingStatus);
+                catch
+                    % The progress bar was closed. It is used as a signal
+                    % to stop, "cancel" processing. Exit.
+                    disp('Progress bar closed, exiting...');
+                    return
                 end
+                
                 
             %% APT
                 if loopCnt ==0
@@ -170,12 +170,13 @@ for channelNr = 1:numberChannels
                 end
                 
                 AptPeriodSamples=settings.samplingFreq*settings.AptPeriod*1e-3; %how many samples to jump between APT checks
+                AptPeriodBytes=AptPeriodSamples*4;
                 switch settings.fileType
                     case 1
                         filePos=(it*AptPeriodSamples-1); %where to start reading the file
                     case 2
                         startingByteToRead=(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond)*settings.samplingFreq*4;%Bytes
-                        filePos=startingByteToRead+(it*AptPeriodSamples-1)*4; %where to start reading the file
+                        filePos=startingByteToRead+it*AptPeriodBytes-1*4; %where to start reading the file. We substract a byte otherwise it skips a byte
                 end
                 
                 %---------------APT Acquisition of the visible satellites

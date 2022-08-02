@@ -26,7 +26,7 @@ raw_signal_42ms=raw_signal_AptPeriod_long(1:42*samplesPerCode);
 
 %% Perform APT acquisition
 acqType='APT';
-acqResults = acquisition_old(raw_signal_42ms, settings, acqType,SatellitePresentList);
+acqResults = acquisition_new_w_APT(raw_signal_42ms, settings, acqType,SatellitePresentList);
 
 end
 

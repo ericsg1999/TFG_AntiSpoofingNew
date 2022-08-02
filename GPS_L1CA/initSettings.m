@@ -55,7 +55,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 37000;        %[ms]
+        settings.msToProcess        = 5000;        %[ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -102,7 +102,7 @@ switch signal_file
         % Threshold for the signal presence decision rule
         settings.acqThreshold       = 3.5;
         % Frequency search step for coarse acquisition
-        settings.acqSearchStep      = 500;               % [Hz]
+        settings.acqSearchStep      = 250;               % [Hz]
         % Sampling rate threshold for downsampling 
         settings.resamplingThreshold    = 8e6;            % [Hz]
         % Enable/dissable use of downsampling for acquisition
@@ -156,7 +156,7 @@ switch signal_file
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
         settings.AptActive=1;
         %Indicates the period of the APT detection (time between detection checks)
-        settings.AptPeriod=10000; %[ms]
+        settings.AptPeriod=1000; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
         %detection. 1 (active), 0 (not active)
         settings.AptPlots=1;
@@ -177,7 +177,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 220000;      % 37000 [ms]
+        settings.msToProcess        = 5000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -189,7 +189,7 @@ switch signal_file
         % function is used to move the file read point, therefore advance is byte
         % based only. 
         settings.skipNumberOfBytes     = 0;
-        settings.fileStartingReadingSecond=50;
+        settings.fileStartingReadingSecond=0;
         % Texbat spoofing scenarios may not be perfectly aligned with the
         % cleanStatic signal. In paper "Detailed Analysis of the TEXBAT
         % Datasets Using a High Fidelity Software GPS Receiver" it is
@@ -225,9 +225,9 @@ switch signal_file
         settings.acqSatelliteList   = 1:32;         %[PRN numbers]
         % Band around IF to search for satellite signal. Depends on max Doppler.
         % It is single sideband, so the whole search band is tiwce of it.
-        settings.acqSearchBand      = 14;           %[KHz]
+        settings.acqSearchBand      = 7000;           %[KHz]
         % Non-coherent integration times after 1ms coherent integration
-        settings.acqNonCohTime      = 20;                %[ms]
+        settings.acqNonCohTime      = 10;                %[ms]
         % Threshold for the signal presence decision rule
         settings.acqThreshold       = 3.5;
         % Frequency search step for coarse acquisition
@@ -286,7 +286,7 @@ switch signal_file
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
         settings.AptActive=1;
         %Indicates the period of the APT detection (time between detection checks)
-        settings.AptPeriod=10000; %[ms]
+        settings.AptPeriod=1000; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
         %detection. 1 (active), 0 (not active)
         settings.AptPlots=1;
