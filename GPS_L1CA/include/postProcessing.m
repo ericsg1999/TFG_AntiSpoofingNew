@@ -118,7 +118,7 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
     end
     
     [data fileID]=readSignalFile(fileID,startingByteToRead,settings,numSamples,openFile);
-    ftell(fileID)
+    %ftell(fileID)
     
     data=data*settings.powerCorrectionFactor;
     %--- Do the acquisition -------------------------------------------

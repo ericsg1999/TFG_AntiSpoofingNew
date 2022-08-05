@@ -81,13 +81,15 @@ for channelNr = activeChnList
     if settings.plotNavigation
         fprintf('Decoding NAV for PRN %02d -------------------- \n', PRN);
     end
+    
+    
     %=== Decode ephemerides and TOW of the first sub-frame ==================
     [eph(PRN), subFrameStart(channelNr), TOW(channelNr)] = ...
                                   NAVdecoding(trackResults(channelNr).I_P,settings);  %#ok<AGROW>
 
     %--- Exclude satellite if it does not have the necessary nav data -----
     if (isempty(eph(PRN).IODC) || isempty(eph(PRN).IODE_sf2) || ...
-        isempty(eph(PRN).IODE_sf3) || (eph(PRN).health ~=0))
+        isempty(eph(PRN).IODE_sf3) || (sum(eph(PRN).health) ~=0))
 
         %--- Exclude channel from the list (from further processing) ------
         activeChnList = setdiff(activeChnList, channelNr);

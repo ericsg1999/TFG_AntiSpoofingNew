@@ -152,27 +152,72 @@ if subFrameStart == inf
 end
     
 %% Decode ephemerides ===============================================
-%=== Convert tracking output to navigation bits =======================
-%--- Copy 5 sub-frames long record from tracking output ---------------
-navBitsSamples = I_P_InputBits(subFrameStart - 20 : ...
-    subFrameStart + (1500 * 20) -1)';
 
-%--- Group every 20 vales of bits into columns ------------------------
-navBitsSamples = reshape(navBitsSamples, ...
-    20, (size(navBitsSamples, 1) / 20));
 
-%--- Sum all samples in the bits to get the best estimate -------------
-navBits = sum(navBitsSamples);
 
-%--- Now threshold and make 1 and 0 -----------------------------------
-% The expression (navBits > 0) returns an array with elements set to 1
-% if the condition is met and set to 0 if it is not met.
-navBits = (navBits > 0);
 
-%--- Convert from decimal to binary -----------------------------------
-% The function ephemeris expects input in binary form. In Matlab it is
-% a string array containing only "0" and "1" characters.
-navBitsBin = dec2bin(navBits);
+%% NEW
+InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
+fiveSubframesSamples=1500*20; %number of bits of each frame (or 5 subframes)
 
-%=== Decode ephemerides and TOW of the first sub-frame ================
-[eph, TOW] = ephemeris(navBitsBin(2:1501)', navBitsBin(1));
+numFiveSubframesInInputBits=floor(InputBitsSamples/fiveSubframesSamples);
+it=0;
+eph = eph_structure_init();
+%The next loop goes through all I_P_InputBits taking groups of 5 subframes
+%(including the previous last bit) and decodes its ephemeris
+for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
+    
+    navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+    it=it+1;
+    
+    %--- Group every 20 vales of bits into columns ------------------------
+    navBitsSamples = reshape(navBitsSamples, ...
+        20, (size(navBitsSamples, 1) / 20));
+
+    %--- Sum all samples in the bits to get the best estimate -------------
+    navBits = sum(navBitsSamples);
+
+    %--- Now threshold and make 1 and 0 -----------------------------------
+    % The expression (navBits > 0) returns an array with elements set to 1
+    % if the condition is met and set to 0 if it is not met.
+    navBits = (navBits > 0);
+
+    %--- Convert from decimal to binary -----------------------------------
+    % The function ephemeris expects input in binary form. In Matlab it is
+    % a string array containing only "0" and "1" characters.
+    navBitsBin = dec2bin(navBits);
+    
+    
+    %if NAVI --> ephemeris_new
+    % if I only want to obtain position--> OLD
+    %=== Decode ephemerides and TOW of the first sub-frame ================
+    [eph, TOW] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph);
+    
+      
+end
+
+
+%% OLD 
+% 
+% %=== Convert tracking output to navigation bits =======================
+% %--- Copy 5 sub-frames long record from tracking output ---------------
+% navBitsSamples = I_P_InputBits(subFrameStart - 20 : subFrameStart + (1500 * 20) -1)';
+% %--- Group every 20 vales of bits into columns ------------------------
+% navBitsSamples = reshape(navBitsSamples, ...
+%     20, (size(navBitsSamples, 1) / 20));
+% 
+% %--- Sum all samples in the bits to get the best estimate -------------
+% navBits = sum(navBitsSamples);
+% 
+% %--- Now threshold and make 1 and 0 -----------------------------------
+% % The expression (navBits > 0) returns an array with elements set to 1
+% % if the condition is met and set to 0 if it is not met.
+% navBits = (navBits > 0);
+% 
+% %--- Convert from decimal to binary -----------------------------------
+% % The function ephemeris expects input in binary form. In Matlab it is
+% % a string array containing only "0" and "1" characters.
+% navBitsBin = dec2bin(navBits);
+% 
+% %=== Decode ephemerides and TOW of the first sub-frame ================
+% [eph, TOW] = ephemeris(navBitsBin(2:1501)', navBitsBin(1),settings);

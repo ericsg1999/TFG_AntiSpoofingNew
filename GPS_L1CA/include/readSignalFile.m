@@ -40,6 +40,6 @@ switch settings.fileType
     otherwise
         data=[];
 end
-ftell(fid) %en bytes. Cada muestra son 4 bytes!! ([16  int-->una muestra 2 B] y complejas[una muestra tiene parte real de 16 int y parte imaginaria de 16 int])
+%ftell(fid) %en bytes. Cada muestra son 4 bytes!! ([16  int-->una muestra 2 B] y complejas[una muestra tiene parte real de 16 int y parte imaginaria de 16 int])
 end
 

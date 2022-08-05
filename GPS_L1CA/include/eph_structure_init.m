@@ -29,7 +29,8 @@ function eph= eph_structure_init()
 % Flags for message data decoding. 0 indicates decoding fail, 1 is successful
 % decoding. idValid(1:2) for message type 10 and 11, idValid(3:10) for message
 % type 30:37, idValid(11) for others.
-eph.idValid(1:5) = zeros(1,5);
+% eph.idValid(1:5) = zeros(1,5);
+eph.idValid=[];
 % PRN
 eph.PRN  = [];
 
