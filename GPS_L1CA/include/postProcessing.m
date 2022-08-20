@@ -116,9 +116,9 @@ if ((settings.skipAcquisition == 0) || ~exist('acqResults', 'var'))
             startingByteToRead=(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond)*settings.samplingFreq*4;%Bytes
             
     end
-    
+    ftell(fileID)
     [data fileID]=readSignalFile(fileID,startingByteToRead,settings,numSamples,openFile);
-    %ftell(fileID)
+    ftell(fileID)
     
     data=data*settings.powerCorrectionFactor;
     %--- Do the acquisition -------------------------------------------

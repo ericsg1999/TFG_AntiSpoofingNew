@@ -134,3 +134,116 @@ a=[a; [1 2 3 4 5]]
     
     %--- Find the third highest correlation peak in the same freq. bin ---
     [thirdPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange2));
+    
+    
+
+%% NEW
+I_P_InputBits=1:1000000;
+subFrameStart=100;
+InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
+fiveSubframesSamples=1500*20; %number of bits of each frame (or 5 subframes)
+
+numFiveSubframesInInputBits=floor((InputBitsSamples-subFrameStart)/fiveSubframesSamples);%number of frames inside input bits. It starts to count when it finds the subFrameStart
+it=0;
+eph = eph_structure_init();
+%The next loop goes through all I_P_InputBits taking groups of 5 subframes
+%(including the previous last bit) and decodes its ephemeris
+for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
+    
+    navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+    it=it+1;
+    
+    %--- Group every 20 vales of bits into columns ------------------------
+    navBitsSamples = reshape(navBitsSamples, ...
+        20, (size(navBitsSamples, 1) / 20));
+
+    %--- Sum all samples in the bits to get the best estimate -------------
+    navBits = sum(navBitsSamples);
+
+    %--- Now threshold and make 1 and 0 -----------------------------------
+    % The expression (navBits > 0) returns an array with elements set to 1
+    % if the condition is met and set to 0 if it is not met.
+    navBits = (navBits > 0);
+
+    %--- Convert from decimal to binary -----------------------------------
+    % The function ephemeris expects input in binary form. In Matlab it is
+    % a string array containing only "0" and "1" characters.
+    navBitsBin = dec2bin(navBits);
+    
+    
+    %if NAVI --> ephemeris_new
+    % if I only want to obtain position--> OLD
+    %=== Decode ephemerides and TOW of the first sub-frame ================
+
+%     [eph] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph);
+    navBitsBin(2:1501)';
+      
+end
+[naviTowDetectionResult] = naviTowSpoofingDetection(eph)
+
+%% NEW 2.0
+I_P_InputBits=1:1000000;
+subFrameStart=100;
+
+eph = eph_structure_init();
+%The next loop goes through all I_P_InputBits taking groups of 5 subframes
+%(including the previous last bit) and decodes its ephemeris
+
+%Let's process the first frame, which may be not include all 5 subframes
+
+navBitsSamplesFirstFiveSubFrames=I_P_InputBits(subFrameStart-20 : subFrameStart + (1500 * 20) -1)'; %The first frame could be incomplete. Let's take the first 5 subframes which can be of different frames
+
+navBitsBinFirstFiveSubFrames = bitSynchronization(navBitsSamplesFirstFiveSubFrames); %In bits (1 bit = 20 samples)
+    
+%FirstSubFrameIndex=detectFirstSubFrameIndex(navBitsBinFirstFiveSubFrames(2:301)', navBitsBinFirstFiveSubFrames(1)); %ID of the first subframe received
+FirstSubFrameIndex=3;     
+numSubFramesFirstFrame=5-FirstSubFrameIndex+1; %How many subframes contains the first received frame
+
+lastBitOfFirstFrame=numSubFramesFirstFrame*300+1;
+
+% [eph] = ephemeris_new(navBitsBinFirstFiveSubFrames(2:lastBitOfFirstFrame)', navBitsBinFirstFiveSubFrames(1),settings,eph);
+a=navBitsBinFirstFiveSubFrames(2:lastBitOfFirstFrame)';
+
+fiveSubframesSamples=1500*20; %number of samples of each frame (or 5 subframes)
+
+InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
+
+numFiveSubframesInInputBits=floor((InputBitsSamples-subFrameStart-lastBitOfFirstFrame)/fiveSubframesSamples);%number of frames inside input bits. It starts to count when it finds the subFrameStart
+
+it=0;
+
+%Now that we have already decoded the first and problematic frame (as it
+%may be incomplete), let's decode all frames 
+for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
+    
+    %navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+    
+%     firstCompleteFrameSample=subFrameStart+numSubFramesFirstFrame*300*20;
+    
+%     firstCompleteFrameSample=subFrameStart+lastBitOfFirstFrame*20+it*1500;
+    firstCompleteFrameSample=subFrameStart+lastBitOfFirstFrame*20;
+    firstFrameSample=firstCompleteFrameSample+(it)*(1500*20)-20;
+    %firstInputBit=subFrameStart+numSubFramesFirstFrame*300*20+it*(1500*20)-20;
+    lastFrameSample=firstFrameSample +20+ (1500 * 20)-1;
+    navBitsSamples=I_P_InputBits(firstFrameSample : lastFrameSample)';
+    
+    
+    it=it+1;
+    
+    navBitsBin = bitSynchronization(navBitsSamples);
+    
+    
+    
+%     if i==1 %PROCESSING OF THE FIRST FRAME. Sólo le pasaremos los subframes del primer frame. Por ejemplo, si el primer subframe que recibimos es el 3, la primera vez solo decodificaremos les efemerides de los subframes 3,4 y 5
+%          %when p
+%         
+%     else %PROCESSING DE LOS SUBFRAMES QUE NO SEAN EL PRIMERO. LE PASASMOS 5 SUBFRAMES
+%         firstBitOfFrame=numSubFramesFirstFrame*300+1+1500*(i-1);
+%         
+%         lastBitOfFirstFrame=firstBitOfFrame+1500;
+        
+%         [eph] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph); %when p
+    b=navBitsBin(2:1501)';
+end
+[naviTowDetectionResult] = naviTowSpoofingDetection(eph)
+    

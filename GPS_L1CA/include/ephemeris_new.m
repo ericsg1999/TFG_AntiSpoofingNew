@@ -1,4 +1,4 @@
-function [eph, TOW] = ephemeris_new(bits, D30Star,settings,eph)
+function [eph] = ephemeris_new(bits, D30Star,settings,eph)
 %IT APPENDS TO THE GLOBAL OBJECT EPH THE VALUES OF THE CURRENT FRAME. THE
 %CURRENT FRAME (5 SUBFRAMES) ARE STORED IN THE VARIABLE BITS
 %Function decodes ephemerides and TOW from the given bit stream. The stream
@@ -50,9 +50,9 @@ function [eph, TOW] = ephemeris_new(bits, D30Star,settings,eph)
 
 
 %% Check if there is enough data ==========================================
-if length(bits) < 1500
-    error('The parameter BITS must contain 1500 bits!');
-end
+% if length(bits) < 1500
+%     error('The parameter BITS must contain 1500 bits!');
+% end
 
 %% Check if the parameters are strings ====================================
 if ~ischar(bits)
@@ -72,6 +72,8 @@ gpsPi = 3.1415926535898;
 % is decoded for a given PRN.
 
 idValid=zeros(1,5);
+fiveTowFrame=zeros(1,5);
+FirstSubframeIndex=0;
 % if settings.naviTowActive==1
 %     fiveTowFrame=[]; %vector containing the five TOW of each subframe (1 frame contains 5 subframes)
 % end
@@ -92,7 +94,10 @@ for i = 1:5
     %--- Decode the sub-frame id ------------------------------------------
     % For more details on sub-frame contents please refer to GPS IS.
     subframeID = bin2dec(subframe(50:52));
-
+    if i==1 && FirstSubframeIndex==0
+        FirstSubframeIndex=subframeID;
+    end
+    
     %--- Decode sub-frame based on the sub-frames id ----------------------
     % The task is to select the necessary bits and convert them to decimal
     % numbers. For more details on sub-frame contents please refer to GPS
@@ -100,6 +105,9 @@ for i = 1:5
     switch subframeID
         case 1  %--- It is subframe 1 -------------------------------------
             % It contains WN, SV clock corrections, health and accuracy
+            
+            fiveTowFrame(1)=bin2dec(subframe(31:47)) * 6 - 30;
+%             fiveTowFrame = [fiveTowFrame bin2dec(subframe(31:47)) * 6 - 30];
             eph.weekNumber  = [eph.weekNumber (bin2dec(subframe(61:70)) + 1024)];
             eph.accuracy    = [eph.accuracy (bin2dec(subframe(73:76)))];
             eph.health      = [eph.health (bin2dec(subframe(77:82)))];
@@ -113,6 +121,8 @@ for i = 1:5
 
         case 2  %--- It is subframe 2 -------------------------------------
             % It contains first part of ephemeris parameters
+            fiveTowFrame(2)=bin2dec(subframe(31:47)) * 6 - 30;
+%             fiveTowFrame = [fiveTowFrame bin2dec(subframe(31:47)) * 6 - 30];
             eph.IODE_sf2    = [eph.IODE_sf2 (bin2dec(subframe(61:68)))];
             eph.C_rs        = [eph.C_rs (twosComp2dec(subframe(69: 84)) * 2^(-5))];
             eph.deltan      = [eph.deltan (twosComp2dec(subframe(91:106)) * 2^(-43) * gpsPi)];
@@ -126,6 +136,8 @@ for i = 1:5
 
         case 3  %--- It is subframe 3 -------------------------------------
             % It contains second part of ephemeris parameters
+            fiveTowFrame(3)=bin2dec(subframe(31:47)) * 6 - 30;
+%             fiveTowFrame = [fiveTowFrame bin2dec(subframe(31:47)) * 6 - 30];
             eph.C_ic        = [eph.C_ic (twosComp2dec(subframe(61:76)) * 2^(-29))];
             eph.omega_0     = [eph.omega_0 (twosComp2dec([subframe(77:84) subframe(91:114)])* 2^(-31) * gpsPi)];
             eph.C_is        = [eph.C_is (twosComp2dec(subframe(121:136)) * 2^(-29))];
@@ -141,11 +153,16 @@ for i = 1:5
             % Almanac, ionospheric model, UTC parameters.
             % SV health (PRN: 25-32).
             % Not decoded at the moment.
+            fiveTowFrame(4)=bin2dec(subframe(31:47)) * 6 - 30;
+%             fiveTowFrame = [fiveTowFrame bin2dec(subframe(31:47)) * 6 - 30];
 
         case 5  %--- It is subframe 5 -------------------------------------
             % SV almanac and health (PRN: 1-24).
             % Almanac reference week number and time.
             % Not decoded at the moment.
+            fiveTowFrame(5)=bin2dec(subframe(31:47)) * 6 - 30;
+%             fiveTowFrame = [fiveTowFrame bin2dec(subframe(31:47)) * 6 - 30];
+            break
 
     end % switch subframeID ...
 %     if settings.naviTowActive==1
@@ -166,5 +183,6 @@ eph.idValid=[eph.idValid; idValid];
 % (the variable subframe at this point contains bits of the last subframe). 
 % The duration of 5 subframe is 30 s, thus the start time of the first 
 % subframe
-TOW = bin2dec(subframe(31:47)) * 6 - 30;
-eph.TOW = [eph.TOW TOW];
+%TOW = bin2dec(subframe(31:47)) * 6 - 30;
+
+eph.TOW = [eph.TOW; fiveTowFrame];

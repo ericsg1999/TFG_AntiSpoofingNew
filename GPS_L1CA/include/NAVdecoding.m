@@ -91,10 +91,12 @@ clear index2
 xcorrLength = (length(tlmXcorrResult) +  1) /2;
 
 %--- Find at what index/ms the preambles start ------------------------
+% index = find(...
+%     abs(tlmXcorrResult(xcorrLength : xcorrLength * 2 - 1)) > 153)' + ...
+%     searchStartOffset;
 index = find(...
     abs(tlmXcorrResult(xcorrLength : xcorrLength * 2 - 1)) > 153)' + ...
     searchStartOffset;
-
 % Delete index inferior to 40 and superior to 13000 to avoid boundaries 
 % problems                                                                      
 index = index((index>40 & index<settings.msToProcess - (20 * 60 -1)) == 1);
@@ -109,7 +111,7 @@ for i = 1:size(index) % For each occurrence
     
     index2 = index - index(i);
     
-    if (~isempty(find(index2 == 6000, 1)))
+    if ((~isempty(find(index2 == 6000, 1)))&&(~isempty(find(index2 == 12000, 1)))&&(~isempty(find(index2 == 18000, 1)))&&(~isempty(find(index2 == 24000, 1)))&&(~isempty(find(index2 == 30000, 1))))
         
         %=== Re-read bit vales for preamble verification ==============
         % Preamble occurrence is verified by checking the parity of
@@ -156,47 +158,168 @@ end
 
 
 
-%% NEW
-InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
-fiveSubframesSamples=1500*20; %number of bits of each frame (or 5 subframes)
+ %% NEW
+% InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
+% fiveSubframesSamples=1500*20; %number of bits of each frame (or 5 subframes)
+% 
+% numFiveSubframesInInputBits=floor((InputBitsSamples-subFrameStart)/fiveSubframesSamples);%number of frames inside input bits. It starts to count when it finds the subFrameStart
+% it=0;
+% eph = eph_structure_init();
+% %The next loop goes through all I_P_InputBits taking groups of 5 subframes
+% %(including the previous last bit) and decodes its ephemeris
+% for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
+%     
+%     navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+%     it=it+1;
+%     
+%     %--- Group every 20 vales of bits into columns ------------------------
+%     navBitsSamples = reshape(navBitsSamples, ...
+%         20, (size(navBitsSamples, 1) / 20));
+% 
+%     %--- Sum all samples in the bits to get the best estimate -------------
+%     navBits = sum(navBitsSamples);
+% 
+%     %--- Now threshold and make 1 and 0 -----------------------------------
+%     % The expression (navBits > 0) returns an array with elements set to 1
+%     % if the condition is met and set to 0 if it is not met.
+%     navBits = (navBits > 0);
+% 
+%     %--- Convert from decimal to binary -----------------------------------
+%     % The function ephemeris expects input in binary form. In Matlab it is
+%     % a string array containing only "0" and "1" characters.
+%     navBitsBin = dec2bin(navBits);
+%     
+%     
+%     %if NAVI --> ephemeris_new
+%     % if I only want to obtain position--> OLD
+%     %=== Decode ephemerides and TOW of the first sub-frame ================
+% 
+%     [eph] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph);
+%     
+%       
+% end
+% [naviTowDetectionResult] = naviTowSpoofingDetection(eph)
 
-numFiveSubframesInInputBits=floor(InputBitsSamples/fiveSubframesSamples);
-it=0;
+% %% NEW 2.0
+% 
+% 
+% eph = eph_structure_init();
+% %The next loop goes through all I_P_InputBits taking groups of 5 subframes
+% %(including the previous last bit) and decodes its ephemeris
+% 
+% %Let's process the first frame, which may be not include all 5 subframes
+% 
+% navBitsSamplesFirstFiveSubFrames=I_P_InputBits(subFrameStart-20 : subFrameStart + (1500 * 20) -1)'; %The first frame could be incomplete. Let's take the first 5 subframes which can be of different frames
+% 
+% navBitsBinFirstFiveSubFrames = bitSynchronization(navBitsSamplesFirstFiveSubFrames); %In bits (1 bit = 20 samples)
+%     
+% FirstSubFrameIndex=detectFirstSubFrameIndex(navBitsBinFirstFiveSubFrames(2:301)', navBitsBinFirstFiveSubFrames(1)); %ID of the first subframe received
+% % FirstSubFrameIndex=3;     
+% numSubFramesFirstFrame=5-FirstSubFrameIndex+1; %How many subframes contains the first received frame
+% 
+% lastBitOfFirstFrame=numSubFramesFirstFrame*300+1;
+% 
+% [eph] = ephemeris_new(navBitsBinFirstFiveSubFrames(2:lastBitOfFirstFrame)', navBitsBinFirstFiveSubFrames(1),settings,eph);
+% a=navBitsBinFirstFiveSubFrames(2:lastBitOfFirstFrame)';
+% 
+% fiveSubframesSamples=1500*20; %number of samples of each frame (or 5 subframes)
+% 
+% InputBitsSamples=size(I_P_InputBits,2); %number of samples of the incoming bits
+% 
+% numFiveSubframesInInputBits=floor((InputBitsSamples-subFrameStart-lastBitOfFirstFrame)/fiveSubframesSamples);%number of frames inside input bits. It starts to count when it finds the subFrameStart
+% 
+% it=0;
+% 
+% %Now that we have already decoded the first and problematic frame (as it
+% %may be incomplete), let's decode all frames 
+% for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
+%     
+%     %navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+%     
+% %     firstCompleteFrameSample=subFrameStart+numSubFramesFirstFrame*300*20;
+%     
+% %     firstCompleteFrameSample=subFrameStart+lastBitOfFirstFrame*20+it*1500;
+%     firstCompleteFrameSample=subFrameStart+lastBitOfFirstFrame*20;
+%     firstFrameSample=firstCompleteFrameSample+(it)*(1500*20)-20;
+%     %firstInputBit=subFrameStart+numSubFramesFirstFrame*300*20+it*(1500*20)-20;
+%     lastFrameSample=firstFrameSample +20+ (1500 * 20)-1;
+%     navBitsSamples=I_P_InputBits(firstFrameSample : lastFrameSample)';
+%     
+%     
+%     it=it+1;
+%     
+%     navBitsBin = bitSynchronization(navBitsSamples);
+%     
+%     
+%     
+% %     if i==1 %PROCESSING OF THE FIRST FRAME. Sólo le pasaremos los subframes del primer frame. Por ejemplo, si el primer subframe que recibimos es el 3, la primera vez solo decodificaremos les efemerides de los subframes 3,4 y 5
+% %          %when p
+% %         
+% %     else %PROCESSING DE LOS SUBFRAMES QUE NO SEAN EL PRIMERO. LE PASASMOS 5 SUBFRAMES
+% %         firstBitOfFrame=numSubFramesFirstFrame*300+1+1500*(i-1);
+% %         
+% %         lastBitOfFirstFrame=firstBitOfFrame+1500;
+%         
+%     [eph] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph); %when p
+%     b=navBitsBin(2:1501)';
+% end
+% [naviTowDetectionResult] = naviTowSpoofingDetection(eph)
+%% NEW 3.0
+
+
 eph = eph_structure_init();
 %The next loop goes through all I_P_InputBits taking groups of 5 subframes
 %(including the previous last bit) and decodes its ephemeris
-for i=1:fiveSubframesSamples:numFiveSubframesInInputBits*fiveSubframesSamples %i=1:fiveSubframesSamples:InputBitsSamples
-    
-    navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
-    it=it+1;
-    
-    %--- Group every 20 vales of bits into columns ------------------------
-    navBitsSamples = reshape(navBitsSamples, ...
-        20, (size(navBitsSamples, 1) / 20));
 
-    %--- Sum all samples in the bits to get the best estimate -------------
-    navBits = sum(navBitsSamples);
-
-    %--- Now threshold and make 1 and 0 -----------------------------------
-    % The expression (navBits > 0) returns an array with elements set to 1
-    % if the condition is met and set to 0 if it is not met.
-    navBits = (navBits > 0);
-
-    %--- Convert from decimal to binary -----------------------------------
-    % The function ephemeris expects input in binary form. In Matlab it is
-    % a string array containing only "0" and "1" characters.
-    navBitsBin = dec2bin(navBits);
-    
-    
-    %if NAVI --> ephemeris_new
-    % if I only want to obtain position--> OLD
-    %=== Decode ephemerides and TOW of the first sub-frame ================
-    [eph, TOW] = ephemeris_new(navBitsBin(2:1501)', navBitsBin(1),settings,eph);
-    
-      
+%Let's process the first frame, which may be not include all 5 subframes
+a=size(I_P_InputBits,2);
+groupsOf20samples=floor((a-subFrameStart-20)/20);%how many entire bits are from the subFrameStart until the end
+g=0;
+while i<(a-subFrameStart)
+    g=g+1;
+    i=i+20;
 end
 
+navBitsSamples=I_P_InputBits(subFrameStart-20 : (subFrameStart-21+groupsOf20samples*20))'; %The first frame could be incomplete. Let's take the first 5 subframes which can be of different frames
 
+navBitsBin = bitSynchronization(navBitsSamples); %In bits (1 bit = 20 samples)
+    
+FirstSubFrameIndex=detectFirstSubFrameIndex(navBitsBin(2:301)', navBitsBin(1)); %ID of the first subframe received
+% FirstSubFrameIndex=3;     
+numSubFramesFirstFrame=5-FirstSubFrameIndex+1; %How many subframes contains the first received frame
+
+lastBitOfFirstFrame=numSubFramesFirstFrame*300+1;
+
+[eph] = ephemeris_new(navBitsBin(2:lastBitOfFirstFrame)', navBitsBin(1),settings,eph);
+
+numNavBitsBin=size(navBitsBin,1);
+
+oneFrameBits=1500; %number of samples of each frame (or 5 subframes)
+
+numFramesInNavBitsBin=floor((numNavBitsBin-lastBitOfFirstFrame)/oneFrameBits);%number of frames inside input bits. It starts to count when it finds the subFrameStart
+
+it=0;
+
+%Now that we have already decoded the first and problematic frame (as it
+%may be incomplete), let's decode all frames 
+for i=1:oneFrameBits:oneFrameBits*numFramesInNavBitsBin %i=1:fiveSubframesSamples:InputBitsSamples
+    
+    %navBitsSamples=I_P_InputBits(subFrameStart+it*(1500*20)-20 : subFrameStart + (it+1)*(1500 * 20) -1)';
+    
+%     firstCompleteFrameSample=subFrameStart+numSubFramesFirstFrame*300*20;
+    
+%     firstCompleteFrameSample=subFrameStart+lastBitOfFirstFrame*20+it*1500;
+    firstFrameBit=lastBitOfFirstFrame+1500*it; %+1?
+    lastFrameBit=firstFrameBit+1500;%+1?
+    oneFrameNavBits=navBitsBin(firstFrameBit : lastFrameBit);
+    
+    
+    it=it+1;
+
+    [eph] = ephemeris_new(oneFrameNavBits(2:1501)', oneFrameNavBits(1),settings,eph); %when p
+   
+end
+[naviTowDetectionResult] = naviTowSpoofingDetection(eph);
 %% OLD 
 % 
 % %=== Convert tracking output to navigation bits =======================

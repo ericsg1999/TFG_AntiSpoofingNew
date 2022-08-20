@@ -238,17 +238,18 @@ for channelNr = 1:numberChannels
                 % records). In addition skip through that data file to start at the
                 % appropriate sample (corresponding to code phase). Assumes sample
                 % type is schar (or 1 byte per sample)
-                skipNumberOfBytes=settings.samplingFreq*(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond);
+                ftell(fid)
+                skipNumberOfBytes=4*settings.samplingFreq*(settings.fileStartingReadingSecond+settings.fileStartingOffsetSecond);
                 if strcmp(settings.dataType,'int16')
                     fseek(fid, ...
-                        dataAdaptCoeff*(skipNumberOfBytes + (channel(channelNr).codePhase-1)*2), ...
+                        skipNumberOfBytes + (channel(channelNr).codePhase-1)*4, ...
                         'bof');
                 else
                     fseek(fid, ...
                         dataAdaptCoeff*(skipNumberOfBytes + channel(channelNr).codePhase-1), ...
                         'bof');
                 end
-
+                ftell(fid)
                 % Get a vector with the C/A code sampled 1x/chip
                 caCode = generateCAcode(channel(channelNr).PRN);
                 % Then make it possible to do early and late versions
@@ -320,9 +321,10 @@ for channelNr = 1:numberChannels
 
                     % Read in the appropriate number of samples to process this
                     % interation
+                    %ftell(fid)
                     [rawSignal, samplesRead] = fread(fid, ...
                         dataAdaptCoeff*blksize, settings.dataType);
-
+                    %ftell(fid)
                     rawSignal = rawSignal';
 
                     % For complex data 
