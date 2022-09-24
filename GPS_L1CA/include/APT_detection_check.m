@@ -1,4 +1,4 @@
-function [fileID] = APT_detection_check(settings,fid1,filePos,SatellitePresentList,openFile)
+function [fileID,spoofingRecord,secondaryPeakMagnitudeVector] = APT_detection_check(settings,fid1,filePos,SatellitePresentList,openFile,spoofingRecord,secondaryPeakMagnitudeVector)
 %APT_DETECTION_CHECK calls acquisition function in order to perform the APT
 %check with the purpose of detecting a possible secondary peak in the
 %search grid. 
@@ -26,8 +26,10 @@ raw_signal_42ms=raw_signal_AptPeriod_long(1:42*samplesPerCode);
 
 %% Perform APT acquisition
 acqType='APT';
-acqResults = acquisition_new_w_APT(raw_signal_42ms, settings, acqType,SatellitePresentList);
+[acqResults,spoofingAlert,secondaryPeakMagnitude] = acquisition_new_w_APT(raw_signal_42ms, settings, acqType,SatellitePresentList);
 
+spoofingRecord=[spoofingRecord spoofingAlert];
+secondaryPeakMagnitudeVector=[secondaryPeakMagnitudeVector secondaryPeakMagnitude];
 end
 
 %[channel.PRN]

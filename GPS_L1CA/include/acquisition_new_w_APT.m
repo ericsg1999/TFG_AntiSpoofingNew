@@ -1,4 +1,4 @@
-function acqResults = acquisition_new_w_APT(longSignal, settings, acqType,SatellitePresentList)
+function [acqResults,spoofingAlert,secondaryPeakMagnitude] = acquisition_new_w_APT(longSignal, settings, acqType,SatellitePresentList)
 %Function performs cold start acquisition on the collected "data". It
 %searches for GPS signals of all satellites, which are listed in field
 %"acqSatelliteList" in the settings structure. Function saves code phase
@@ -17,7 +17,9 @@ function acqResults = acquisition_new_w_APT(longSignal, settings, acqType,Satell
 %                       detected signals in the "acqResults" structure. The
 %                       field "carrFreq" is set to 0 if the signal is not
 %                       detected for the given PRN number.
-
+%       spoofingAlert - 0 if the spoofing is not active, 1 if the spoofing 
+%                       is active and it detects spoofing and -1 if the spoofing 
+%                       is active and it does not detect spoofing
 %--------------------------------------------------------------------------
 %                         CU Multi-GNSS SDR
 % (C) Updated by Yafeng Li, Nagaraj C. Shivaramaiah and Dennis M. Akos
@@ -172,7 +174,9 @@ switch acqType
     otherwise 
         fprintf('ERROR: Incorrect Acquisition type (acqType) input parameter of the function acquisition.m');
 end
-    
+
+spoofingAlert=0;
+secondaryPeakMagnitude=0;
 for PRN = list_sat_to_acquire
     %% Coarse acquisition ===========================================
     % Generate C/A codes and sample them according to the sampling freq.
@@ -211,15 +215,8 @@ for PRN = list_sat_to_acquire
             results(freqBinIndex, :) = results(freqBinIndex, :) + cohRresult;
         end % nonCohIndex = 1: settings.acqNonCohTime
     end % frqBinIndex = 1:numberOfFreqBins
-    
-    %% Look for correlation peaks for coarse acquisition ============
-%     % Find the correlation peak and the carrier frequency
-%     [~, acqCoarseBin] = max(max(results, [], 2));
-%     % Find code phase of the same correlation peak
-%     [peakSize, codePhase] = max(max(results));
-%      
-%     
-%     
+     
+    %% LOOK FOR CORRELATION PEAKS FOR CORASE ACQUISITION IN THE 2MS-> NEW============================
     %--------------- FIRST PEAK -------------------------------------------
     %--- Find the correlation peak and the carrier frequency --------------
     %M = max(A,[],dim) returns the maximum element along dimension dim. For example, if A is a matrix, then max(A,[],2) is a column vector containing the maximum value of each row.
@@ -227,73 +224,182 @@ for PRN = list_sat_to_acquire
 
     %--- Find code phase of the same correlation peak ---------------------
     [primaryPeakSize primaryCodePhase] = max(max(results));
-    
+
     codephase_inferiorLimit=1;
     codephase_superiorLimit=size(results,2);
-    
+    %samplesPerCode=17;
+
+    ms=0;%will indicate at which ms will be the first peak
     %if primaryCodePhase is in the 1st ms, look for the second and third peak in
     %the 1st ms. If primaryCodePhase is in the 2nd ms, look for the
     %second and third peak in the 2nd ms
     if primaryCodePhase<=samplesPerCode %the first peak is in the 1st ms
+        ms=1;
         codephase_inferiorLimit=1;
         codephase_superiorLimit=samplesPerCode;
     else %the first peak is in the 2nd ms
-        codephase_inferiorLimit=samplesPerCode;
+        ms=2;
+        codephase_inferiorLimit=samplesPerCode+1;
         codephase_superiorLimit=size(results,2);
     end
-    
+
     %--------------- SECOND PEAK ------------------------------------------
     %--- Find 1 chip wide C/A code phase exclude range around the peak ----
-%     samplesPerCodeChip   = round(settings.samplingFreq / settings.codeFreqBasis);
-    samplesPerCodeChip=round(settings.samplingFreq / settings.codeFreqBasis);
+    samplesPerCodeChip   = round(settings.samplingFreq / settings.codeFreqBasis);
+    %samplesPerCodeChip=2;
     excludeRangeIndex1 = primaryCodePhase - samplesPerCodeChip;
     excludeRangeIndex2 = primaryCodePhase + samplesPerCodeChip;
-    
-    
+
+    caso=0;
     %--- Correct C/A code phase exclude range if the range includes array
     %boundaries
     if excludeRangeIndex1 < codephase_inferiorLimit+2
+        caso=1;
         codePhaseRange = excludeRangeIndex2 : ...
                          (codephase_superiorLimit-1 + excludeRangeIndex1);
-                         
+
     elseif excludeRangeIndex2 >= codephase_superiorLimit
+        caso=2;
         codePhaseRange = (excludeRangeIndex2 - samplesPerCode) : ...
                          excludeRangeIndex1;
     else
+        caso=3;
         codePhaseRange = [codephase_inferiorLimit:excludeRangeIndex1, ...
                           excludeRangeIndex2 : codephase_superiorLimit];
     end
 
     %--- Find the second highest correlation peak in the same freq. bin ---
     [secondaryPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange));
-    
+
     %Find the codephase of the second peak outside the surroundings of the
     secondaryPeakCodePhase=find(results(frequencyBinIndex,:)==secondaryPeakSize);
-    
+
     %--------------- THIRD PEAK -------------------------------------------
     %--- Find 1 chip wide C/A code phase exclude range around the peak ----
     excludeRangeIndex11 = secondaryPeakCodePhase - samplesPerCodeChip;
     excludeRangeIndex22 = secondaryPeakCodePhase + samplesPerCodeChip;
 
-    %--- Correct C/A code phase exclude range if the range includes array
-    %boundaries
-    if excludeRangeIndex1 < 2
-        codePhaseRange2 = [excludeRangeIndex2 : excludeRangeIndex11...
-                          excludeRangeIndex22:(codephase_superiorLimit-1 + excludeRangeIndex1)];
 
-    elseif excludeRangeIndex2 >= samplesPerCode
-        codePhaseRange2 = [(excludeRangeIndex2 - samplesPerCode):excludeRangeIndex11 ...
-                         excludeRangeIndex22:excludeRangeIndex1] ;
-    else
-        if excludeRangeIndex1<excludeRangeIndex11
-            codePhaseRange2 = [codephase_inferiorLimit:excludeRangeIndex1  excludeRangeIndex2:excludeRangeIndex11 excludeRangeIndex22:codephase_superiorLimit];
+    if caso==1
+        if excludeRangeIndex11<=excludeRangeIndex2
+            codePhaseRange2=[excludeRangeIndex22:codephase_superiorLimit];
+        elseif excludeRangeIndex22>=codephase_superiorLimit
+            codePhaseRange2=[excludeRangeIndex2:excludeRangeIndex11];
         else
-            codePhaseRange2 = [codephase_inferiorLimit:excludeRangeIndex11  excludeRangeIndex22:excludeRangeIndex1 excludeRangeIndex2:codephase_superiorLimit];
+            codePhaseRange2=[excludeRangeIndex2:excludeRangeIndex11, excludeRangeIndex22:codephase_superiorLimit];
         end
-    end
-    
-    %--- Find the third highest correlation peak in the same freq. bin ---
+
+
+
+    elseif caso==2
+        if excludeRangeIndex11<=codephase_inferiorLimit
+            codePhaseRange2=[excludeRangeIndex22:codephase_superiorLimit];
+        elseif excludeRangeIndex22>=excludeRangeIndex1
+            codePhaseRange2=[codephase_inferiorLimit:excludeRangeIndex11];
+        else
+            codePhaseRange2=[codephase_inferiorLimit:excludeRangeIndex11, excludeRangeIndex22:excludeRangeIndex1];
+        end
+
+
+    elseif caso==3
+        if excludeRangeIndex11<=codephase_inferiorLimit
+            codePhaseRange2=[excludeRangeIndex22:excludeRangeIndex1,excludeRangeIndex2:codephase_superiorLimit];
+        elseif excludeRangeIndex22>=codephase_superiorLimit
+            codePhaseRange2=[codephase_inferiorLimit:excludeRangeIndex1,excludeRangeIndex2:excludeRangeIndex11];
+        else
+            if excludeRangeIndex1<excludeRangeIndex11 %primary peak is at the left of the secondary peak
+                codePhaseRange2=[codephase_inferiorLimit:excludeRangeIndex1, excludeRangeIndex2:excludeRangeIndex11, excludeRangeIndex22:codephase_superiorLimit];
+            else %primary peak is at the right of the secondary peak
+                codePhaseRange2=[codephase_inferiorLimit:excludeRangeIndex11, excludeRangeIndex22:excludeRangeIndex1, excludeRangeIndex2:codephase_superiorLimit];
+            end
+
+        end
+
+    end        
+%     %--- Find the third highest correlation peak in the same freq. bin ---
     [thirdPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange2));
+%     %% Look for correlation peaks for coarse acquisition ============
+% %     % Find the correlation peak and the carrier frequency
+% %     [~, acqCoarseBin] = max(max(results, [], 2));
+% %     % Find code phase of the same correlation peak
+% %     [peakSize, codePhase] = max(max(results));
+% %      
+% %     
+% %     
+%     %--------------- FIRST PEAK -------------------------------------------
+%     %--- Find the correlation peak and the carrier frequency --------------
+%     %M = max(A,[],dim) returns the maximum element along dimension dim. For example, if A is a matrix, then max(A,[],2) is a column vector containing the maximum value of each row.
+%     [primaryPeakSize frequencyBinIndex] = max(max(results, [], 2));
+% 
+%     %--- Find code phase of the same correlation peak ---------------------
+%     [primaryPeakSize primaryCodePhase] = max(max(results));
+%     
+%     codephase_inferiorLimit=1;
+%     codephase_superiorLimit=size(results,2);
+%     
+%     %if primaryCodePhase is in the 1st ms, look for the second and third peak in
+%     %the 1st ms. If primaryCodePhase is in the 2nd ms, look for the
+%     %second and third peak in the 2nd ms
+%     if primaryCodePhase<=samplesPerCode %the first peak is in the 1st ms
+%         codephase_inferiorLimit=1;
+%         codephase_superiorLimit=samplesPerCode;
+%     else %the first peak is in the 2nd ms
+%         codephase_inferiorLimit=samplesPerCode;
+%         codephase_superiorLimit=size(results,2);
+%     end
+%     
+%     %--------------- SECOND PEAK ------------------------------------------
+%     %--- Find 1 chip wide C/A code phase exclude range around the peak ----
+% %     samplesPerCodeChip   = round(settings.samplingFreq / settings.codeFreqBasis);
+%     samplesPerCodeChip=round(settings.samplingFreq / settings.codeFreqBasis);
+%     excludeRangeIndex1 = primaryCodePhase - samplesPerCodeChip;
+%     excludeRangeIndex2 = primaryCodePhase + samplesPerCodeChip;
+%     
+%     
+%     %--- Correct C/A code phase exclude range if the range includes array
+%     %boundaries
+%     if excludeRangeIndex1 < codephase_inferiorLimit+2
+%         codePhaseRange = excludeRangeIndex2 : ...
+%                          (codephase_superiorLimit-1 + excludeRangeIndex1);
+%                          
+%     elseif excludeRangeIndex2 >= codephase_superiorLimit
+%         codePhaseRange = (excludeRangeIndex2 - samplesPerCode) : ...
+%                          excludeRangeIndex1;
+%     else
+%         codePhaseRange = [codephase_inferiorLimit:excludeRangeIndex1, ...
+%                           excludeRangeIndex2 : codephase_superiorLimit];
+%     end
+% 
+%     %--- Find the second highest correlation peak in the same freq. bin ---
+%     [secondaryPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange));
+%     
+%     %Find the codephase of the second peak outside the surroundings of the
+%     secondaryPeakCodePhase=find(results(frequencyBinIndex,:)==secondaryPeakSize);
+%     
+%     %--------------- THIRD PEAK -------------------------------------------
+%     %--- Find 1 chip wide C/A code phase exclude range around the peak ----
+%     excludeRangeIndex11 = secondaryPeakCodePhase - samplesPerCodeChip;
+%     excludeRangeIndex22 = secondaryPeakCodePhase + samplesPerCodeChip;
+% 
+%     %--- Correct C/A code phase exclude range if the range includes array
+%     %boundaries
+%     if excludeRangeIndex1 < 2
+%         codePhaseRange2 = [excludeRangeIndex2 : excludeRangeIndex11...
+%                           excludeRangeIndex22:(codephase_superiorLimit-1 + excludeRangeIndex1)];
+% 
+%     elseif excludeRangeIndex2 >= samplesPerCode
+%         codePhaseRange2 = [(excludeRangeIndex2 - samplesPerCode):excludeRangeIndex11 ...
+%                          excludeRangeIndex22:excludeRangeIndex1] ;
+%     else
+%         if excludeRangeIndex1<excludeRangeIndex11
+%             codePhaseRange2 = [codephase_inferiorLimit:excludeRangeIndex1  excludeRangeIndex2:excludeRangeIndex11 excludeRangeIndex22:codephase_superiorLimit];
+%         else
+%             codePhaseRange2 = [codephase_inferiorLimit:excludeRangeIndex11  excludeRangeIndex22:excludeRangeIndex1 excludeRangeIndex2:codephase_superiorLimit];
+%         end
+%     end
+%     
+%     %--- Find the third highest correlation peak in the same freq. bin ---
+%     [thirdPeakSize junk] = max(results(frequencyBinIndex, codePhaseRange2));
     
     %--- Store result -----------------------------------------------------
     acqResults.peakMetric(1,PRN) = primaryPeakSize/thirdPeakSize;
@@ -316,7 +422,7 @@ for PRN = list_sat_to_acquire
         xlabel('Code delay [samples]');
         ylabel('Doppler freq [Hz]');
         
-    elseif settings.AptPlots==1 && (strcmp(acqType,'APT')==1)
+    elseif settings.AptPlots==1 && (strcmp(acqType,'APT')==1)&& PRN==23
         Td=0:1:(samplesPerCode-1);
         
         if settings.AptShowPlots==0
@@ -344,7 +450,7 @@ for PRN = list_sat_to_acquire
         xlabel('Code delay [samples]');
         ylabel('Doppler freq [Hz]');
         
-        if settings.AptSavePlots==1
+        if settings.AptSavePlots==1 
             %set(f,'WindowState','fullscreen');
             saveas(f,['D:\Images\' titol_ '.fig']); %gcf stands for the actual figure
         end
@@ -358,9 +464,14 @@ for PRN = list_sat_to_acquire
     
     % If the result is above threshold, then there is a signal ...
     %% Fine carrier frequency search ================================
-    
+    switch acqType
+        case 'Normal'
+            threshold=settings.acqThreshold;
+        case 'APT'
+            threshold=1;
+    end
     %--- Do fine acquisition -----------------------------------
-    if acqResults.peakMetric(1,PRN) > settings.acqThreshold
+    if acqResults.peakMetric(1,PRN) > threshold%settings.acqThreshold
         
         % Indicate PRN number of the detected signal
         %fprintf('%02d', PRN);
@@ -445,6 +556,7 @@ for PRN = list_sat_to_acquire
             %--- Store result secondary peak in case it overcomes the APT threshold-----------------------------------------------------
             %acqResults.peakMetric(2,PRN) = secondaryPeakSize/sigPower/settings.acqNonCohTime;
             acqResults.peakMetric(2,PRN) = secondaryPeakSize/thirdPeakSize;
+            secondaryPeakMagnitude=secondaryPeakSize/thirdPeakSize;
             acqResults.carrFreq(2,PRN) = fineFreqBins(maxFinBin);
             acqResults.codePhase(2,PRN) =secondaryPeakCodePhase;%secondaryPeakCodePhase; 
             
@@ -454,11 +566,13 @@ for PRN = list_sat_to_acquire
                     disp(['     Primary peak:   magnitude =', num2str(round(acqResults.peakMetric(1,PRN),2)) ,' Code-phase =', num2str(acqResults.codePhase(1,PRN))])
                     disp(['     Secondary peak: magnitude =', num2str(round(acqResults.peakMetric(2,PRN),2)) ,' Code-phase =', num2str(acqResults.codePhase(2,PRN))])
                     %disp('--------------------------------------')
+                    spoofingAlert=1;
                 else
                     disp(['--------------SPOOFING STATUS PRN ', num2str(PRN), ': No spoofing---------------'])
                     disp(['     Primary peak magnitude =', num2str(acqResults.peakMetric(1,PRN)) ,' Code-phase =', num2str(acqResults.codePhase(1,PRN))])
                     disp(['     Secondary peak magnitude =', num2str(acqResults.peakMetric(2,PRN)) ,' Code-phase =', num2str(acqResults.codePhase(2,PRN))])
                     %disp('--------------------------------------')
+                    spoofingAlert=-1;
                 end
             end
             

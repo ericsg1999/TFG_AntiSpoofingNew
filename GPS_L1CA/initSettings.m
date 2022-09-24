@@ -55,7 +55,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 5000;        %[ms]
+        settings.msToProcess        = 250000;        %[ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -154,7 +154,7 @@ switch signal_file
         settings.CNo.VSMinterval = 40;
         %% APT detection settings ===========================================================
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
-        settings.AptActive=1;
+        settings.AptActive=0;
         %Indicates the period of the APT detection (time between detection checks)
         settings.AptPeriod=1000; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
@@ -171,13 +171,19 @@ switch signal_file
         %APT threshold. How many times second peak shall be bigger than
         %third peak
         settings.AptThreshold=1;
+        %% NAVI settings ===================================================================
+        settings.NaviTowActive=0;
+        settings.NaviTowPeriodBits=300; 
         
+        %% SCB settings ====================================================================
+        settings.SbcActive=1;
+        settings.SbcPeriod= 1000;%[ms]
         
     case 1 %'TEXBAT_cleanStatic'
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 200000;      % 37000 [ms]
+        settings.msToProcess        = 250000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -306,12 +312,14 @@ switch signal_file
         settings.NaviTowActive=1;
         settings.NaviTowPeriodBits=300; 
         
-        
+        %% SCB settings ====================================================================
+        settings.SbcActive=1;
+        settings.SbcPeriod= 1000;%[ms]
     case 2 %'TEXBAT_ds2'
        %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 210000;      % 37000 [ms]
+        settings.msToProcess        = 80000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -323,7 +331,7 @@ switch signal_file
         % function is used to move the file read point, therefore advance is byte
         % based only. 
         settings.skipNumberOfBytes     = 0;
-        settings.fileStartingReadingSecond=60;
+        settings.fileStartingReadingSecond=100;
         % Texbat spoofing scenarios may not be perfectly aligned with the
         % cleanStatic signal. In paper "Detailed Analysis of the TEXBAT
         % Datasets Using a High Fidelity Software GPS Receiver" it is
@@ -418,9 +426,9 @@ switch signal_file
         settings.CNo.VSMinterval = 40;
         %% APT detection settings ===========================================================
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
-        settings.AptActive=0;
+        settings.AptActive=1;
         %Indicates the period of the APT detection (time between detection checks)
-        settings.AptPeriod=10000; %[ms]
+        settings.AptPeriod=1000; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
         %detection. 1 (active), 0 (not active)
         settings.AptPlots=1;
@@ -440,12 +448,14 @@ switch signal_file
         settings.NaviTowActive=1;
         settings.NaviTowPeriodBits=300; 
         
-        
+        %% SCB settings ====================================================================
+        settings.SbcActive=0;
+        settings.SbcPeriod= 1000;%[ms]
     case 3 %'TEXBAT_ds3'
        %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 390000;      % 37000 [ms]
+        settings.msToProcess        = 33000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -457,7 +467,7 @@ switch signal_file
         % function is used to move the file read point, therefore advance is byte
         % based only. 
         settings.skipNumberOfBytes     = 0;
-        settings.fileStartingReadingSecond=0;
+        settings.fileStartingReadingSecond=162;
         % Texbat spoofing scenarios may not be perfectly aligned with the
         % cleanStatic signal. In paper "Detailed Analysis of the TEXBAT
         % Datasets Using a High Fidelity Software GPS Receiver" it is
@@ -497,7 +507,7 @@ switch signal_file
         % Non-coherent integration times after 1ms coherent integration
         settings.acqNonCohTime      = 10;                %[ms]
         % Threshold for the signal presence decision rule
-        settings.acqThreshold       = 3.5;
+        settings.acqThreshold       = 2.5;%3.5
         % Frequency search step for coarse acquisition
         settings.acqSearchStep      = 250;               % [Hz]
         % Sampling rate threshold for downsampling 
@@ -552,18 +562,18 @@ switch signal_file
         settings.CNo.VSMinterval = 40;
         %% APT detection settings ===========================================================
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
-        settings.AptActive=0;
+        settings.AptActive=1;
         %Indicates the period of the APT detection (time between detection checks)
-        settings.AptPeriod=1000; %[ms]
+        settings.AptPeriod=100; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
         %detection. 1 (active), 0 (not active)
-        settings.AptPlots=1;
+        settings.AptPlots=0;
         %Although settings.AptPlots is active, you might not desire to
         %display them, for instance, if you want to save them directly without
         %displaying them.
         settings.AptShowPlots=0;
         %Saves plots in C:\Users\erics\OneDrive\Documentos\MATLAB\TFG\Borre\Images
-        settings.AptSavePlots=1;
+        settings.AptSavePlots=0;
         %Number of channels per satellite 
         settings.AptNumberChannelsPerSat=2;
         %APT threshold. How many times second peak shall be bigger than
@@ -573,6 +583,9 @@ switch signal_file
         %% NAVI settings ===================================================================
         settings.NaviTowActive=0;
         settings.NaviTowPeriodBits=300; 
+        %% SCB settings ====================================================================
+        settings.SbcActive=0;
+        settings.SbcPeriod= 1000;%[ms]
     case 4 %'TEXBAT_ds4'
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
@@ -705,6 +718,10 @@ switch signal_file
         %% NAVI settings ===================================================================
         settings.NaviTowActive=0;
         settings.NaviTowPeriodBits=300; 
+
+        %% SCB settings ====================================================================
+        settings.SbcActive=1;
+        settings.SbcPeriod= 1000;%[ms]
     case 5 %'TEXBAT_ds5'
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
@@ -825,11 +842,18 @@ switch signal_file
         %APT threshold. How many times second peak shall be bigger than
         %third peak
         settings.AptThreshold=1;
+        %% NAVI settings ===================================================================
+        settings.NaviTowActive=0;
+        settings.NaviTowPeriodBits=300; 
+        
+        %% SCB settings ====================================================================
+        settings.SbcActive=1;
+        settings.SbcPeriod= 1000;%[ms]
     case 7 %'TEXBAT_ds7'
        %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 390000;      % 37000 [ms]
+        settings.msToProcess        = 250000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -938,25 +962,29 @@ switch signal_file
         %Indicates if the APT spoofing detection is ON (1) or OFF (0)
         settings.AptActive=0;
         %Indicates the period of the APT detection (time between detection checks)
-        settings.AptPeriod=3000; %[ms]
+        settings.AptPeriod=100; %[ms]
         %Activates acquisition search grid plots or not in the APT spoofing
         %detection. 1 (active), 0 (not active)
-        settings.AptPlots=1;
+        settings.AptPlots=0;
         %Although settings.AptPlots is active, you might not desire to
         %display them, for instance, if you want to save them directly without
         %displaying them.
         settings.AptShowPlots=0;
         %Saves plots in C:\Users\erics\OneDrive\Documentos\MATLAB\TFG\Borre\Images
-        settings.AptSavePlots=1;
+        settings.AptSavePlots=0;
         %Number of channels per satellite 
         settings.AptNumberChannelsPerSat=2;
         %APT threshold. How many times second peak shall be bigger than
         %third peak
-        settings.AptThreshold=2;
+        settings.AptThreshold=1.6;
         
         %% NAVI settings ===================================================================
         settings.NaviTowActive=0;
         settings.NaviTowPeriodBits=300; 
+        
+        %% SCB settings ====================================================================
+        settings.SbcActive=1;
+        settings.SbcPeriod= 1000;%[ms]
 end
 
         
