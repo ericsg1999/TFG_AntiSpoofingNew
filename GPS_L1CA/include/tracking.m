@@ -491,15 +491,16 @@ for channelNr = 1:numberChannels
                     % Now we only copy status, but it can be update by a lock detector
                     % if implemented
                     trackResults(channelNr).status  = channel(channelNr).status;
-                    x=settings.fileStartingReadingSecond:settings.SbcPeriod/1000:(settings.fileStartingReadingSecond+(settings.msToProcess/1000)-(settings.SbcPeriod/1000));
+                    if settings.SbcActive==1
+                        x=settings.fileStartingReadingSecond:settings.SbcPeriod/1000:(settings.fileStartingReadingSecond+(settings.msToProcess/1000)-(settings.SbcPeriod/1000));
+                        figure
+                        plot(x,SCB);
+                        titol=['SCB Check on PRN: ', num2str(channel(channelNr).PRN)];
+                        title(titol);
+                        xlabel('Time [s]');
+                        ylabel('SCB');
+                    end
                     
-                    
-                    figure
-                    plot(x,SCB);
-                    titol=['SCB Check on PRN: ', num2str(channel(channelNr).PRN)];
-                    title(titol);
-                    xlabel('Time [s]');
-                    ylabel('SCB');
                     
                 end % if a PRN is assigned
         end

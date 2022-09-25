@@ -55,7 +55,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 250000;        %[ms]
+        settings.msToProcess        = 20000;        %[ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -183,7 +183,7 @@ switch signal_file
         %% Processing settings ====================================================
         % Number of milliseconds to be processed used 36000 + any transients (see
         % below - in Nav parameters) to ensure nav subframes are provided
-        settings.msToProcess        = 250000;      % 37000 [ms]
+        settings.msToProcess        = 5000;      % 37000 [ms]
 
         % Maximum number of satellites to process. For each satellite, it
         % will be assigned settings.AptNumberChannelsPerSat number of
@@ -309,11 +309,11 @@ switch signal_file
         settings.AptThreshold=2;
         
         %% NAVI settings ===================================================================
-        settings.NaviTowActive=1;
+        settings.NaviTowActive=0;
         settings.NaviTowPeriodBits=300; 
         
         %% SCB settings ====================================================================
-        settings.SbcActive=1;
+        settings.SbcActive=0;
         settings.SbcPeriod= 1000;%[ms]
     case 2 %'TEXBAT_ds2'
        %% Processing settings ====================================================

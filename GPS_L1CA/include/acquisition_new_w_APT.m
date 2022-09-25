@@ -1,4 +1,4 @@
-function [acqResults,spoofingAlert,secondaryPeakMagnitude] = acquisition_new_w_APT(longSignal, settings, acqType,SatellitePresentList)
+function [acqResults,spoofingAlert,secondaryPeakMagnitude] = acquisition_new_w_APT(longSignal, settings, acqMode,SatellitePresentList)
 %Function performs cold start acquisition on the collected "data". It
 %searches for GPS signals of all satellites, which are listed in field
 %"acqSatelliteList" in the settings structure. Function saves code phase
@@ -129,7 +129,7 @@ coarseFreqBin = zeros(1, numberOfFreqBins);
 
 %--- Initialize acqResults ------------------------------------------------
 % Carrier frequencies of detected signals
-switch acqType
+switch acqMode
     case 'Normal'
         acqResults.carrFreq     = zeros(1, 32);
         % C/A code phases of detected signals
@@ -166,7 +166,7 @@ sigPower = sqrt(var(longSignal(1:samplesPerCode)) * samplesPerCode);
 % Perform search for all listed PRN numbers ...
 %fprintf('(');
 list_sat_to_acquire=zeros(1,32);
-switch acqType
+switch acqMode
     case 'Normal'
         list_sat_to_acquire=settings.acqSatelliteList;
     case 'APT'
@@ -410,7 +410,7 @@ for PRN = list_sat_to_acquire
     
     %% plot the grid of the acquired acquisition search grids
  
-    if settings.acqInitialPlots==1 && (strcmp(acqType,'Normal')==1)
+    if settings.acqInitialPlots==1 && (strcmp(acqMode,'Normal')==1)
         Td=0:1:(samplesPerCode-1);
         figure;
         if primaryCodePhase<samplesPerCode
@@ -418,11 +418,11 @@ for PRN = list_sat_to_acquire
         else
             mesh(Td,coarseFreqBin,results(:,(samplesPerCode+1:2*samplesPerCode)));
         end
-        title(['PCPS ' acqType ' Acquisition grid for SV ID ', num2str(PRN)]);
+        title(['PCPS ' acqMode ' Acquisition grid for SV ID ', num2str(PRN)]);
         xlabel('Code delay [samples]');
         ylabel('Doppler freq [Hz]');
         
-    elseif settings.AptPlots==1 && (strcmp(acqType,'APT')==1)&& PRN==23
+    elseif settings.AptPlots==1 && (strcmp(acqMode,'APT')==1)&& PRN==23
         Td=0:1:(samplesPerCode-1);
         
         if settings.AptShowPlots==0
@@ -442,10 +442,10 @@ for PRN = list_sat_to_acquire
         else
             mesh(Td,coarseFreqBin,results(:,(samplesPerCode+1:2*samplesPerCode)));
         end
-        titol=['PCPS ' acqType ' Acquisition grid for SV ID ', num2str(PRN) ' (', datestr(datetime('now')) ')'];
+        titol=['PCPS ' acqMode ' Acquisition grid for SV ID ', num2str(PRN) ' (', datestr(datetime('now')) ')'];
 %         data_string=strsplit(datestr(datetime('now')))
 %         titol_=['PCPS_' acqType '_PRN_', num2str(PRN) '_(', cell2mat(split(datestr(datetime('now')),' ',2)) ')'];
-        titol_=['PCPS_' acqType '_PRN_', num2str(PRN) '_(', strrep(strrep(datestr(now), ':', '-'),' ','-'), ')'];
+        titol_=['PCPS_' acqMode '_PRN_', num2str(PRN) '_(', strrep(strrep(datestr(now), ':', '-'),' ','-'), ')'];
         title(titol);
         xlabel('Code delay [samples]');
         ylabel('Doppler freq [Hz]');
@@ -464,7 +464,7 @@ for PRN = list_sat_to_acquire
     
     % If the result is above threshold, then there is a signal ...
     %% Fine carrier frequency search ================================
-    switch acqType
+    switch acqMode
         case 'Normal'
             threshold=settings.acqThreshold;
         case 'APT'
@@ -525,7 +525,7 @@ for PRN = list_sat_to_acquire
         if(acqResults.carrFreq(1,PRN) == 0)
             acqResults.carrFreq(1,PRN) = 1;
         end
-        if (strcmp(acqType,'Normal'))==1
+        if (strcmp(acqMode,'Normal'))==1
             %--- Indicate PRN number of the detected signal -------------------
             fprintf('Acquired %02d with Doppler %d Hz, Code Phase %d Samples and Test statistics %d \n'...
             , PRN, acqResults.carrFreq(1,PRN), acqResults.codePhase(1,PRN), acqResults.peakMetric(1,PRN));
@@ -560,7 +560,7 @@ for PRN = list_sat_to_acquire
             acqResults.carrFreq(2,PRN) = fineFreqBins(maxFinBin);
             acqResults.codePhase(2,PRN) =secondaryPeakCodePhase;%secondaryPeakCodePhase; 
             
-            if (strcmp(acqType,'APT')==1)
+            if (strcmp(acqMode,'APT')==1)
                 if (acqResults.peakMetric(2,PRN)>settings.AptThreshold)
                     disp(['--------------SPOOFING STATUS PRN', num2str(PRN), ': SPOOFING DETECTED---------------'])
                     disp(['     Primary peak:   magnitude =', num2str(round(acqResults.peakMetric(1,PRN),2)) ,' Code-phase =', num2str(acqResults.codePhase(1,PRN))])

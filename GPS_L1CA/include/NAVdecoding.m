@@ -313,7 +313,6 @@ for i=1:oneFrameBits:oneFrameBits*numFramesInNavBitsBin %i=1:fiveSubframesSample
     lastFrameBit=firstFrameBit+1500;%+1?
     oneFrameNavBits=navBitsBin(firstFrameBit : lastFrameBit);
     
-    
     it=it+1;
 
     [eph] = ephemeris_new(oneFrameNavBits(2:1501)', oneFrameNavBits(1),settings,eph); %when p
